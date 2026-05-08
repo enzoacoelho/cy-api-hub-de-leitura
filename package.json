@@ -14,5 +14,13 @@
     "@faker-js/faker": "^10.2.0",
     "cypress": "^15.9.0",
     "cypress-plugin-api": "^2.11.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enzoacoelho/hub-de-leitura-api-teste.git"
+  },
+  "bugs": {
+    "url": "https://github.com/enzoacoelho/hub-de-leitura-api-teste/issues"
+  },
+  "homepage": "https://github.com/enzoacoelho/hub-de-leitura-api-teste#readme"
 }
