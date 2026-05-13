@@ -4,10 +4,11 @@ import { faker } from '@faker-js/faker';
 let token
 
 beforeEach(() => {
-    cy.gerarToken('admin@biblioteca.com', 'admin123').then(tkn => {
-        token = tkn
+    cy.fixture('users').then((usuarios) => {
+        cy.gerarToken(usuarios.admin.email, usuarios.admin.password).then(tkn => {
+            token = tkn
+        });
     });
-
 });
 
 describe('GET - Testes no Catálogo de Livros', () => {
