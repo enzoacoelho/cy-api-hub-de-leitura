@@ -84,6 +84,18 @@ Cypress.Commands.add('cadastrarLivro', (token, livro) => {
     })
 });
 
+Cypress.Commands.add('atualizarLivro', (token, bookID, livro) => {
+    cy.api({
+        method: 'PUT',
+        url: `books/${bookID}`,
+        headers: {'Authorization': token},
+        failOnStatusCode: false,
+        body: livro
+    }).then((response) => {
+        return response
+    })
+});
+
 Cypress.Commands.add('adicionarLivroCesta', (userID, bookID) => {
     cy.api({
         method: 'POST',
@@ -95,6 +107,17 @@ Cypress.Commands.add('adicionarLivroCesta', (userID, bookID) => {
         },
     }).then((response) => {
         expect(response.status).equal(200);
+    })
+});
+
+Cypress.Commands.add('deletarLivro', (livroID, token) => {
+    cy.api({
+        method: 'DELETE',
+        url: 'books/' + livroID,
+        headers: {'Authorization': token},
+        failOnStatusCode: false,
+    }).then((response) => {
+        return response
     })
 });
 

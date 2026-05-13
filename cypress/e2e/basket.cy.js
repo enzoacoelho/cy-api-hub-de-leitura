@@ -58,43 +58,43 @@ describe('GET - Testes de Cesta de Livros - Listar', () => {
 
     });
 
-    });
+});
 
-    describe('GET - Testes de Cesta de Livros - Verificar disponibilidade dos itens', () => {
+describe('GET - Testes de Cesta de Livros - Verificar disponibilidade dos itens', () => {
 
-        it('Todos os itens disponíveis', () => {
-            cy.api({
-                method: 'GET',
-                url: `basket/1/check-availability`
-            }).should((response) => {
-                expect(response.status).to.eq(200);
+    it('Todos os itens disponíveis', () => {
+        cy.api({
+            method: 'GET',
+            url: `basket/1/check-availability`
+        }).should((response) => {
+            expect(response.status).to.eq(200);
 
-                // Validações baseadas no JSON real que você enviou
-                expect(response.body.total).to.eq(1);
-                expect(response.body.available).to.eq(1);
-                expect(response.body.unavailable).to.eq(0);
-                expect(response.body.canProceedToReservation).to.be.true;
+            // Validações baseadas no JSON real que você enviou
+            expect(response.body.total).to.eq(1);
+            expect(response.body.available).to.eq(1);
+            expect(response.body.unavailable).to.eq(0);
+            expect(response.body.canProceedToReservation).to.be.true;
 
-                // Valida que a lista de livros indisponíveis está REALMENTE vazia
-                expect(response.body.unavailableBooks).to.be.an('array').and.empty;
+            // Valida que a lista de livros indisponíveis está REALMENTE vazia
+            expect(response.body.unavailableBooks).to.be.an('array').and.empty;
 
-                // Valida o item específico do Pequeno Príncipe
-                const item = response.body.items[0];
-                expect(item.book_id).to.eq(3);
-                expect(item.status).to.eq('available');
-            });
+            // Valida o item específico do Pequeno Príncipe
+            const item = response.body.items[0];
+            expect(item.book_id).to.eq(3);
+            expect(item.status).to.eq('available');
         });
-
     });
 
-    describe('POST - Testes de Cesta de Livros / Carrinho', () => {
+});
 
-        let tokenAdmin;
-        let tokenUser;
-        let userID;
-        let bookId;
+describe('POST - Testes de Cesta de Livros / Carrinho', () => {
 
-        it('Deve adicionar um livro à cesta com sucesso', () => {
+    let tokenAdmin;
+    let tokenUser;
+    let userID;
+    let bookId;
+
+    it('Deve adicionar um livro à cesta com sucesso', () => {
         cy.fixture('users').then((usuarios) => {
             userID = usuarios.padrao.userID;
 
@@ -103,8 +103,8 @@ describe('GET - Testes de Cesta de Livros - Listar', () => {
                 tokenAdmin = tknAdmin;
 
                 // Gera o objeto do livro e cadastra
-                const dadosLivro = cy.criarLivro(); 
-                
+                const dadosLivro = cy.criarLivro();
+
                 cy.cadastrarLivro(tokenAdmin, dadosLivro).then((responseLivro) => {
                     expect(responseLivro.status).to.eq(201);
                     bookId = responseLivro.body.id;
@@ -127,7 +127,7 @@ describe('GET - Testes de Cesta de Livros - Listar', () => {
                             expect(resBasket.status).to.eq(201);
                             expect(resBasket.body.message).to.eq("Livro adicionado ao carrinho com sucesso.");
                             expect(resBasket.body.bookTitle).to.eq(dadosLivro.title);
-                            
+
                             cy.log(`Sucesso: Livro "${dadosLivro.title}" (ID: ${bookId}) adicionado.`);
                         });
                     });
@@ -136,160 +136,192 @@ describe('GET - Testes de Cesta de Livros - Listar', () => {
         });
     });
 
-        
 
-        it('Adicionar livro já na cesta (400)', () => {
-            cy.adicionarLivroCesta(userID, 1);
-             cy.api({
-                method: 'POST',
-                url: 'basket',
-                headers: { 'Authorization': tokenUser },
-                body: {
-                    userId: userID,
-                    bookId: 1,
-                    quantity: 1
-                }
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(400);
-                expect(resBasket.body.message).to.eq("Livro já está na cesta.");
-            
-            });
+
+    it('Adicionar livro já na cesta (400)', () => {
+        cy.adicionarLivroCesta(userID, 1);
+        cy.api({
+            method: 'POST',
+            url: 'basket',
+            headers: { 'Authorization': tokenUser },
+            body: {
+                userId: userID,
+                bookId: 1,
+                quantity: 1
+            }
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(400);
+            expect(resBasket.body.message).to.eq("Livro já está na cesta.");
+
         });
-
-        it('Adicionar livro inexistente (404)', () => {
-            cy.api({
-                method: 'POST',
-                url: 'basket',
-                headers: { 'Authorization': tokenUser },
-                body: {
-                    userId: userID,
-                    bookId: 1656665,
-                    quantity: 1
-                }
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(404);
-                expect(resBasket.body.message).to.eq("Livro não encontrado.");
-            
-            });
-        });
-
-        it('Quantidade diferente de 1 (400)', () => {
-            cy.api({
-                method: 'POST',
-                url: 'basket',
-                headers: { 'Authorization': tokenUser },
-                body: {
-                    userId: userID,
-                    bookId: 3,
-                    quantity: 433
-                }
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(404);
-                expect(resBasket.body.message).to.eq("Quantidade deve ser 1 para livros.");
-            
-            });
-        });
-
-        it('Tentar adicionar à cesta de outro usuário (403)', () => {
-            cy.api({
-                method: 'POST',
-                url: 'basket',
-                headers: { 'Authorization': tokenUser },
-                body: {
-                    userId: 2,
-                    bookId: 3,
-                    quantity: 1
-                }
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(403);
-                expect(resBasket.body.message).to.eq("Acesso negado. Você só pode adicionar ao seu próprio carrinho.");
-            
-            });
-        });
-
     });
 
-    describe('DELETE - Testes de Cesta de Livros - Limpar cesta completa', () => {
-        
+    it('Adicionar livro inexistente (404)', () => {
+        cy.api({
+            method: 'POST',
+            url: 'basket',
+            headers: { 'Authorization': tokenUser },
+            body: {
+                userId: userID,
+                bookId: 1656665,
+                quantity: 1
+            }
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(404);
+            expect(resBasket.body.message).to.eq("Livro não encontrado.");
 
-        it('Limpar cesta com itens (sucesso)', () => {
-            
         });
-
-        it('Limpar cesta já vazia (sucesso)', () => {
-
-        });
-
-        it('Tentar limpar cesta de outro usuário (403)', () => {
-
-        });
-
     });
 
-    describe('DELETE - Testes de Cesta de Livros - Remover item específico', () => {
+    it('Quantidade diferente de 1 (400)', () => {
+        cy.api({
+            method: 'POST',
+            url: 'basket',
+            headers: { 'Authorization': tokenUser },
+            body: {
+                userId: userID,
+                bookId: 3,
+                quantity: 433
+            }
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(404);
+            expect(resBasket.body.message).to.eq("Quantidade deve ser 1 para livros.");
+
+        });
+    });
+
+    it('Tentar adicionar à cesta de outro usuário (403)', () => {
+        cy.api({
+            method: 'POST',
+            url: 'basket',
+            headers: { 'Authorization': tokenUser },
+            body: {
+                userId: 2,
+                bookId: 3,
+                quantity: 1
+            }
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(403);
+            expect(resBasket.body.message).to.eq("Acesso negado. Você só pode adicionar ao seu próprio carrinho.");
+
+        });
+    });
+
+});
+
+describe('DELETE - Testes de Cesta de Livros - Limpar cesta completa', () => {
+
+    const bookID = 17;
+    cy.adicionarLivroCesta(userID, bookID);
+    it('Limpar cesta com itens (sucesso)', () => {
+        cy.api({
+            method: 'DELETE',
+            url: `basket/${userID}`,
+            headers: { 'Authorization': token },
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(200);
+            expect(resBasket.body.message).to.eq("Carrinho limpo com sucesso.");
+
+            expect(response.body.itemsRemoved).to.be.a('number');
+            expect(response.body.previousItemCount).to.be.a('number');
+
+            expect(response.body.itemsRemoved).to.eq(response.body.previousItemCount);
+
+        });
+    });
+
+    it('Limpar cesta já vazia (sucesso)', () => {
+        cy.api({
+            method: 'DELETE',
+            url: `basket/${userID}`,
+            headers: { 'Authorization': token },
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(200);
+            expect(resBasket.body.message).to.eq("Carrinho já estava vazio.");
+
+            expect(response.body.itemsRemoved).to.eq(0);
+
+        });
+    });
+
+    it('Tentar limpar cesta de outro usuário (403)', () => {
+        cy.api({
+            method: 'DELETE',
+            url: 'basket/4',
+            headers: { 'Authorization': token },
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(403);
+            expect(resBasket.body.message).to.eq("Acesso negado. Você só pode limpar seu próprio carrinho.");
+
+        });
+    });
+
+});
+
+describe('DELETE - Testes de Cesta de Livros - Remover item específico', () => {
+    const bookID = 8;
+    cy.adicionarLivroCesta(userID, bookID);
+
+    it('Remover item existente na cesta (sucesso)', () => {
+        cy.api({
+            method: 'DELETE',
+            url: `basket/${userID}/${bookID}`,
+            headers: { 'Authorization': token }
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(200);
+            expect(resBasket.body.message).to.eq("Item removido da cesta com sucesso.");
+
+            const { removedItem } = response.body;
+            expect(removedItem).to.have.all.keys('bookId', 'bookTitle', 'bookAuthor');
+            expect(removedItem.bookId).to.eq(1);
+            expect(removedItem.bookTitle).to.eq("A Menina que Roubava Livros");
+            expect(removedItem.bookAuthor).to.eq("Markus Zusak");
+            expect(removedItem.bookId).to.be.a('number');
+            expect(removedItem.bookTitle).to.be.a('string');
+
+        });
+    });
+
+    it('Remover item que não está na cesta (404)', () => {
         const bookID = 8;
-        cy.adicionarLivroCesta(userID, bookID);
+        cy.api({
+            method: 'DELETE',
+            url: `basket/${userID}/${bookID}`,
+            headers: { 'Authorization': token },
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(404);
+            expect(resBasket.body.message).to.eq("Item não encontrado na cesta.");
 
-        it('Remover item existente na cesta (sucesso)', () => {
-            cy.api({
-                method: 'DELETE',
-                url: `basket/${userID}/${bookID}`,
-                headers: { 'Authorization': token }
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(200);
-                expect(resBasket.body.message).to.eq("Item removido da cesta com sucesso.");
-
-                const { removedItem } = response.body;
-                expect(removedItem).to.have.all.keys('bookId', 'bookTitle', 'bookAuthor');
-                expect(removedItem.bookId).to.eq(1);
-                expect(removedItem.bookTitle).to.eq("A Menina que Roubava Livros");
-                expect(removedItem.bookAuthor).to.eq("Markus Zusak");
-                expect(removedItem.bookId).to.be.a('number');
-                expect(removedItem.bookTitle).to.be.a('string');
-            
-            });
         });
-
-        it('Remover item que não está na cesta (404)', () => {
-            const bookID = 8;
-            cy.api({
-                method: 'DELETE',
-                url: `basket/${userID}/${bookID}`,
-                headers: { 'Authorization': token },
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(404);
-                expect(resBasket.body.message).to.eq("Item não encontrado na cesta.");
-            
-            });
-        });
-
-        it('IDs inválidos (400)', () => {
-            const bookID = 33338;
-            cy.api({
-                method: 'DELETE',
-                url: `basket/${userID}/${bookID}`,
-                headers: { 'Authorization': token },
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(404);
-                expect(resBasket.body.message).to.eq("Item não encontrado na cesta.");
-            
-            });
-        });
-
-        it('Tentar remover de cesta de outro usuário (403)', () => {
-            const bookID = 8;
-            cy.api({
-                method: 'DELETE',
-                url: `basket/3/${bookID}`,
-                headers: { 'Authorization': token },
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(403);
-                expect(resBasket.body.message).to.eq("Acesso negado. Você só pode modificar seu próprio carrinho.");
-            
-            });
-        });
-
     });
+
+    it('IDs inválidos (400)', () => {
+        const bookID = 33338;
+        cy.api({
+            method: 'DELETE',
+            url: `basket/${userID}/${bookID}`,
+            headers: { 'Authorization': token },
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(404);
+            expect(resBasket.body.message).to.eq("Item não encontrado na cesta.");
+
+        });
+    });
+
+    it('Tentar remover de cesta de outro usuário (403)', () => {
+        const bookID = 8;
+        cy.api({
+            method: 'DELETE',
+            url: `basket/3/${bookID}`,
+            headers: { 'Authorization': token },
+        }).should((resBasket) => {
+            expect(resBasket.status).to.eq(403);
+            expect(resBasket.body.message).to.eq("Acesso negado. Você só pode modificar seu próprio carrinho.");
+
+        });
+    });
+
+});
 
 
 

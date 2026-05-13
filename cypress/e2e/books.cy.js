@@ -32,23 +32,40 @@ describe('GET - Testes no Catálogo de Livros', () => {
     });
 
     it('Deve buscar por um livro pelo ID e validar todos os campos', () => {
-        cy.api({
-            method: 'GET',
-            url: 'books/10'
+        cy.fixture('books').then((livros) => {
+            const livro = livros.harry_potter;
 
-        }).should(response => {
-            expect(response.status).equal(200)
-            expect(response.body.book.id).equal(10)
-            expect(response.body.book.title).equal('Harry Potter e a Pedra Filosofal')
-            expect(response.body.book.author).to.include('Rowling')
-            expect(response.body.book.editor).equal('Editora Rocco')
-            expect(response.body.book.category).equal('Fantasia')
-            expect(response.body.book.language).equal('Português')
-            expect(response.body.book.publication_year).equal(2008)
-            expect(response.body.book.pages).equal(256)
-            expect(response.body.book.format).equal('Físico')
-            expect(response.body.book.description).to.include('Harry Potter')
+            cy.api({
+                method: 'GET',
+                url: `books/${livro.id}`
+            }).should((response) => {
+                expect(response.status).to.eq(200);
+                
+                const { book } = response.body;
 
+                expect(book.id).to.eq(livro.id);
+                expect(book.title).to.eq(livro.title);
+                expect(book.author).to.eq(livro.author);
+                expect(book.description).to.eq(livro.description);
+                expect(book.category).to.eq(livro.category);
+                expect(book.isbn).to.eq(livro.isbn);
+                expect(book.editor).to.eq(livro.editor);
+                expect(book.language).to.eq(livro.language);
+                expect(book.publication_year).to.eq(livro.publication_year);
+                expect(book.pages).to.eq(livro.pages);
+                expect(book.format).to.eq(livro.format);
+                expect(book.total_copies).to.eq(livro.total_copies);
+                expect(book.available_copies).to.eq(livro.available_copies);
+                expect(book.cover_image).to.eq(livro.cover_image);
+                expect(book.created_at).to.eq(livro.created_at);
+
+                expect(book).to.have.all.keys(
+                    'id', 'title', 'author', 'description', 'category', 
+                    'isbn', 'editor', 'language', 'publication_year', 
+                    'pages', 'format', 'total_copies', 'available_copies', 
+                    'cover_image', 'created_at'
+                );
+            });
         });
     });
 });
@@ -56,95 +73,68 @@ describe('GET - Testes no Catálogo de Livros', () => {
 describe('POST - Testes no Catálogo de Livros', () => {
 
     it('Deve cadastrar um novo livro com sucesso com usuário ADMINISTRADOR', () => {
-        const livroFake = {
-            title: faker.lorem.words(3),
-            author: faker.person.fullName(),
-            description: faker.lorem.paragraph(),
-            category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
-            isbn: faker.string.numeric(13),
-            editor: faker.company.name(),
-            language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
-            publication_year: faker.date.past(20).getFullYear(),
-            pages: 965,
-            format: faker.helpers.arrayElement(['Físico', 'Digital']),
-            total_copies: 50,
-            available_copies: 45
-        }
-        cy.cadastrarLivro(token,
-            livroFake.title,
-            livroFake.author,
-            livroFake.description,
-            livroFake.category,
-            livroFake.isbn,
-            livroFake.editor,
-            livroFake.language,
-            livroFake.publication_year,
-            livroFake.pages,
-            livroFake.format,
-            livroFake.total_copies,
-            livroFake.available_copies
-        ).then(response => {
-            expect(response.status).to.equal(201)
-            expect(response.body.message).to.equal("Livro criado com sucesso.")
-            expect(response.body.book).to.exist
-            expect(response.body.book.title).to.equal(livroFake.title);
+        const livro = cy.criarLivro();
 
-        });
+        cy.cadastrarLivro(token, livro).then(response => {
+       
+        expect(response.status).to.equal(201);
+        expect(response.body.message).to.equal("Livro criado com sucesso.");
+        expect(response.body.book).to.exist;
+        
+        expect(response.body.book.title).to.equal(livro.title);
+        expect(response.body.book.isbn).to.equal(livro.isbn);
+    });
+        
     });
 
     it('Cenário Negativo - Não deve permitir que usuário PADRÃO cadastre um livro', () => {
-        cy.gerarToken('maria44@email.com', 'senha123').then(tknComum => {
-            const livroFake = {
-                title: faker.lorem.words(3),
-                author: faker.person.fullName(),
-                description: faker.lorem.paragraph(),
-                category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
-                isbn: faker.string.numeric(13),
-                editor: faker.company.name(),
-                language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
-                publication_year: faker.date.past(20).getFullYear(),
-                pages: 965,
-                format: faker.helpers.arrayElement(['Físico', 'Digital']),
-                total_copies: 50,
-                available_copies: 45
-            }
-            cy.cadastrarLivro(tknComum,
-                livroFake.title,
-                livroFake.author,
-                livroFake.description,
-                livroFake.category,
-                livroFake.isbn,
-                livroFake.editor,
-                livroFake.language,
-                livroFake.publication_year,
-                livroFake.pages,
-                livroFake.format,
-                livroFake.total_copies,
-                livroFake.available_copies
-            ).then(response => {
-                expect(response.status).to.equal(403)
-                expect(response.body.message).to.equal('Acesso negado. Apenas administradores podem realizar esta ação.');
+        cy.fixture('users').then((usuario) => {
+            cy.gerarToken(usuario.padrao.email, usuario.padrao.password).then(tkn => {
+                tokenPadrao = tkn
             });
+
+            const livro = cy.criarLivro();
+            cy.cadastrarLivro(tokenPadrao, livro).then(response => {
+       
+            expect(response.status).to.equal(403);
+            expect(response.body.message).to.equal('Acesso negado. Apenas administradores podem realizar esta ação.');
+
+            });
+        
         });
     });
 
     it('Cenário Negativo - Não deve cadastrar um novo livro com campos obrigatórios em branco', () => {
-        cy.cadastrarLivro(token, "", "", "descrição do livro", "",
-            "", "Edita XY", "Português", 1989, "", "Físico", 9, 5
-        ).then(response => {
+        const livroComCamposVazios = {
+        title: "",          // Campo que deve causar o erro 400
+        author: "",
+        description: "descrição do livro",
+        category: "",
+        isbn: "",
+        editor: "Edita XY",
+        language: "Português",
+        publication_year: 1989,
+        pages: "",
+        format: "Físico",
+        total_copies: 9,
+        available_copies: 5
+        };
+
+        cy.cadastrarLivro(token, livroComCamposVazios).then(response => {
             expect(response.status).to.equal(400)
             expect(response.body.message).to.equal("\"title\" is not allowed to be empty")
         });
     });
 
     it('Cenário Negativo - Não deve cadastrar um livro que já existe no catalogo', () => {
-        cy.cadastrarLivro(token, "O Cortiço", "Aluísio Azevedo",
-            "Romance naturalista que retrata a vida em um cortiço",
-            "Literatura Brasileira", "978-85-260-1320-6", "Editora Ática",
-            "Português", 1890, 312, "Físico", 4, 4
-        ).then(response => {
-            expect(response.status).to.equal(400)
-            expect(response.body.message).to.equal("Já existe um livro com este título e autor.")
+        cy.fixture('books').then((livros) => {
+        const livroExistente = livros.livro_1984;
+
+        //Tenta cadastrar o mesmo livro
+        cy.cadastrarLivro(token, livroExistente).then(response => {
+            expect(response.status).to.equal(400);
+            expect(response.body.message).to.equal("Já existe um livro com este título e autor.");
+            });
         });
     });
 });
@@ -152,150 +142,58 @@ describe('POST - Testes no Catálogo de Livros', () => {
 describe('PUT - Testes no Catálogo de Livros', () => {
 
     it('PUT - Deve atualizar um livro previamente cadastrado - Dinamico', () => {
-        const livroFake = {
-            title: faker.lorem.words(3),
-            author: faker.person.fullName(),
-            description: faker.lorem.paragraph(),
-            category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
-            isbn: faker.string.numeric(13),
-            editor: faker.company.name(),
-            language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
-            publication_year: faker.date.past(20).getFullYear(),
-            pages: 965,
-            format: faker.helpers.arrayElement(['Físico', 'Digital']),
-            total_copies: 50,
-            available_copies: 45
-        }
-        cy.cadastrarLivro(token,
-            livroFake.title,
-            livroFake.author,
-            livroFake.description,
-            livroFake.category,
-            livroFake.isbn,
-            livroFake.editor,
-            livroFake.language,
-            livroFake.publication_year,
-            livroFake.pages,
-            livroFake.format,
-            livroFake.total_copies,
-            livroFake.available_copies
-        ).then(response => {
-            expect(response.status).to.equal(201)
-            expect(response.body.message).to.equal("Livro criado com sucesso.")
+        const livroInicial = cy.criarLivro();
 
-            let livroID = response.body.book.id;
+    //Cadastra o livro para ter um ID para alterar
+        cy.cadastrarLivro(token, livroInicial).then(resPost => {
+            expect(resPost.status).to.equal(201);
+            const livroID = resPost.body.book.id;
 
-            cy.alterarLivro(livroID,
-                token,
-                livroFake.title + ' Alterado',
-                livroFake.author + ' Alterado',
-                livroFake.description,
-                livroFake.category,
-                livroFake.isbn,
-                livroFake.editor,
-                livroFake.language,
-                livroFake.publication_year,
-                livroFake.pages,
-                livroFake.format,
-                livroFake.total_copies,
-                livroFake.available_copies).then(response => {
-                    expect(response.status).to.equal(200)
-                    expect(response.body.message).to.equal("Livro atualizado com sucesso.")
+            // Cria o objeto com os dados alterados (mantendo o resto igual)
+            const livroAlterado = {
+                ...livroInicial,
+                title: livroInicial.title + ' Alterado',
+                author: livroInicial.author + ' Alterado'
+            };
 
-                });
+            cy.alterarLivro(token, livroID, livroAlterado).then(resPut => {
+                expect(resPut.status).to.equal(200);
+                expect(resPut.body.message).to.equal("Livro atualizado com sucesso.");
+                
+                // Valida se os campos foram alterados
+                expect(resPut.body.book.title).to.equal(livroAlterado.title);
+                expect(resPut.body.book.author).to.equal(livroAlterado.author);
             });
-
+        }); 
     });
 
     it('PUT - Cenário Negativo - Não deve permitir que usuário PADRÃO atualize um livro', () => {
 
-        cy.gerarToken('maria44@email.com', 'senha123').then(tokenComum => {
-            const livroFake = {
-                title: faker.lorem.words(3),
-                author: faker.person.fullName(),
-                description: faker.lorem.paragraph(),
-                category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
-                isbn: faker.string.numeric(13),
-                editor: faker.company.name(),
-                language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
-                publication_year: faker.date.past(20).getFullYear(),
-                pages: 965,
-                format: faker.helpers.arrayElement(['Físico', 'Digital']),
-                total_copies: 50,
-                available_copies: 45
-            }
-            cy.cadastrarLivro(token,
-                livroFake.title,
-                livroFake.author,
-                livroFake.description,
-                livroFake.category,
-                livroFake.isbn,
-                livroFake.editor,
-                livroFake.language,
-                livroFake.publication_year,
-                livroFake.pages,
-                livroFake.format,
-                livroFake.total_copies,
-                livroFake.available_copies
-            ).then(response => {
-                expect(response.status).to.equal(201)
-                expect(response.body.message).to.equal("Livro criado com sucesso.")
-
-                let livroID = response.body.book.id;
-
-                cy.alterarLivro(livroID,
-                    tokenComum,
-                    livroFake.title + ' Alterado',
-                    livroFake.author + ' Alterado',
-                    livroFake.description,
-                    livroFake.category,
-                    livroFake.isbn,
-                    livroFake.editor,
-                    livroFake.language,
-                    livroFake.publication_year,
-                    livroFake.pages,
-                    livroFake.format,
-                    livroFake.total_copies,
-                    livroFake.available_copies).then(response => {
-                        expect(response.status).to.equal(403)
-                        expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.")
-
-                    });
-            });
+        cy.fixture('users').then((usuarios) => {
+            cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
+            tokenPadrao = tkn
         });
+
+        const livro = cy.criarLivro();
+
+        cy.atualizarLivro(tokenPadrao, 1, livro).then(response => {
+            expect(response.status).to.equal(403);
+            expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
+            expect(response.body.error).to.equal("ADMIN_REQUIRED");
+            });        
+        });        
     });
+    
+});
+
+describe('DELETE - Testes no Catálogo de Livros', () => {
 
     it('DELETE - Deve deletar um livro previamente cadastrado', () => {
-        const livroFake = {
-            title: faker.lorem.words(3),
-            author: faker.person.fullName(),
-            description: faker.lorem.paragraph(),
-            category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
-            isbn: faker.string.numeric(13),
-            editor: faker.company.name(),
-            language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
-            publication_year: faker.date.past(20).getFullYear(),
-            pages: 965,
-            format: faker.helpers.arrayElement(['Físico', 'Digital']),
-            total_copies: 50,
-            available_copies: 45
-        }
-        cy.cadastrarLivro(token,
-            livroFake.title,
-            livroFake.author,
-            livroFake.description,
-            livroFake.category,
-            livroFake.isbn,
-            livroFake.editor,
-            livroFake.language,
-            livroFake.publication_year,
-            livroFake.pages,
-            livroFake.format,
-            livroFake.total_copies,
-            livroFake.available_copies
-        ).then(response => {
-            expect(response.status).to.equal(201)
-            expect(response.body.message).to.equal("Livro criado com sucesso.")
+        const livro = cy.criarLivro();
+
+        cy.cadastrarLivro(token, livro).then(response => {
+            expect(response.status).to.equal(201);
+            expect(response.body.message).to.equal("Livro criado com sucesso.");
 
             let livroID = response.body.book.id;
 
@@ -304,56 +202,24 @@ describe('PUT - Testes no Catálogo de Livros', () => {
                 expect(response.body.message).to.equal("Livro deletado com sucesso.")
 
             });
-        });
+        });            
     });
-});
-
-describe('DELETE - Testes no Catálogo de Livros', () => {
+    
 
     it('DELETE - Cenario Negativo - Não deve permitir que usuário COMUM delete um livro', () => {
-        cy.gerarToken('maria44@email.com', 'senha123').then(tokenComum => {
-            const livroFake = {
-                title: faker.lorem.words(3),
-                author: faker.person.fullName(),
-                description: faker.lorem.paragraph(),
-                category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
-                isbn: faker.string.numeric(13),
-                editor: faker.company.name(),
-                language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
-                publication_year: faker.date.past(20).getFullYear(),
-                pages: 965,
-                format: faker.helpers.arrayElement(['Físico', 'Digital']),
-                total_copies: 50,
-                available_copies: 45
-            }
-            cy.cadastrarLivro(token,
-                livroFake.title,
-                livroFake.author,
-                livroFake.description,
-                livroFake.category,
-                livroFake.isbn,
-                livroFake.editor,
-                livroFake.language,
-                livroFake.publication_year,
-                livroFake.pages,
-                livroFake.format,
-                livroFake.total_copies,
-                livroFake.available_copies
-            ).then(response => {
-                expect(response.status).to.equal(201)
-                expect(response.body.message).to.equal("Livro criado com sucesso.")
-
-                let livroID = response.body.book.id;
-
-                cy.deletarLivro(livroID, tokenComum).then(response => {
-                    expect(response.status).to.equal(403)
-                    expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.")
-
-                });
-
-            });
+        cy.fixture('users').then((usuarios) => {
+            cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
+            tokenPadrao = tkn
         });
+
+        cy.deletarLivro(1, tokenPadrao).then(response => {
+            expect(response.status).to.equal(403);
+            expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
+            expect(response.body.error).to.equal("ADMIN_REQUIRED");
+            });        
+        });   
     });
+        
 });
 
 
