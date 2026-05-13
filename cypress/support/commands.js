@@ -121,5 +121,17 @@ Cypress.Commands.add('deletarLivro', (livroID, token) => {
     })
 });
 
+Cypress.Commands.add('cancelarReserva', (reservaID, token) => {
+    cy.api({
+        method: 'DELETE',
+        url: 'reservations/' + reservaID,
+        headers: {'Authorization': token},
+        failOnStatusCode: false,
+    }).then((response) => {
+        return response
+    })
+});
+
+
 
 

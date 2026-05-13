@@ -10,6 +10,8 @@ beforeEach(() => {
             token = tkn
         });
     });
+
+    cy.
 });
 
 describe('GET - Testes de Reservas de livros - Listar ', () => {
@@ -123,59 +125,135 @@ describe('GET - Testes de Reservas de livros - Listar ', () => {
 describe('POST - Testes de Reservas de livros - Criar novas reservas', () => {
 
     it('Reservar livro disponível (sucesso)', () => {
+        cy.fixture('books').then((livro) => {
+            const bookID = livro.metamorfose.id;
+            const bookTitle = livro.metamorfose.title;
 
-    });
+            cy.api({
+            method: 'POST',
+            url: 'reservations',
+            headers: { 'Authorization': token },
+            body: {
+                "bookId": bookID
+            },
+            }).should(response => {
+                expect(response.status).to.eq(200);
+                expect(response.body.message).to.eq("Reserva criada com sucesso.");
+                expect(response.body.reservation).to.be.an('array');
 
-    it('Reservar livro esgotado (400)', () => {
-
+                const res = response.body.reservation;
+                expect(res.id).to.be.a('number');
+                expect(res.bookId).to.eq(bookID);
+                expect(res.bookTitle).to.eq(bookTitle);   
+                
+                const reservaID = res.id;
+                cy.cancelarReserva(reservaID, token);
+               
+            });
+        });
     });
 
     it('Reservar livro inexistente (404)', () => {
-
+        cy.api({
+        method: 'POST',
+        url: 'reservations',
+        headers: { 'Authorization': token },
+        body: {
+            "bookId": 56566
+        },
+        }).should(response => {
+            expect(response.status).to.eq(404);
+            expect(response.body.message).to.eq("Livro não encontrado.");  
+            
+        });       
     });
 
     it('Reservar mesmo livro duas vezes (400)', () => {
+        cy.api({
+        method: 'POST',
+        url: 'reservations',
+        headers: { 'Authorization': token },
+        body: {
+            "bookId": 17
+        },
+        }).should(response => {
+            expect(response.status).to.eq(200);
+            expect(response.body.message).to.eq("Reserva criada com sucesso.");
+            expect(response.body.reservation).to.be.an('array'); 
+            const res = response.body.reservation;
+            const reservaID = res.id;
+            
+        });
 
+        cy.api({
+        method: 'POST',
+        url: 'reservations',
+        headers: { 'Authorization': token },
+        body: {
+            "bookId": 17
+        },
+        }).should(response => {
+            expect(response.status).to.eq(400);
+            expect(response.body.message).to.eq("Você já possui uma reserva ativa para este livro.");  
+            
+        });
+        cy.cancelarReserva(reservaID, token);
     });
 
-    it('Exceder limite de 5 reservas simultâneas (400)', () => {
-
-    });
 
     it('Reserva com observações', () => {
+        cy.fixture('books').then((livro) => {
+            const bookID = livro.metamorfose.id;
+            const bookTitle = livro.metamorfose.title;
+            const note = "Livro necessário para trabalho";
 
+            cy.api({
+            method: 'POST',
+            url: 'reservations',
+            headers: { 'Authorization': token },
+            body: {
+                "bookId": bookID,
+                "notes": note
+            },
+            }).should(response => {
+                expect(response.status).to.eq(200);
+                expect(response.body.message).to.eq("Reserva criada com sucesso.");
+                expect(response.body.reservation).to.be.an('array');
+
+                const res = response.body.reservation;
+                expect(res.id).to.be.a('number');
+                expect(res.bookId).to.eq(bookID);
+                expect(res.bookTitle).to.eq(bookTitle);   
+
+                expect(res.notes).to.eq(note);
+                
+                const reservaID = res.id;
+                cy.cancelarReserva(reservaID, token);
+               
+            });
+        });
     });
-
-    it('Reserva sem observações', () => {
-
-    });
-
 });
 
 describe('POST - Testes de Reservas de livros - Criar novas reservas a partir do carrinho', () => {
 
     it('Carrinho com livros disponíveis (sucesso)', () => {
-
+        //cadastrar um livro
+        //adicionar no carrinho
+        //fazer reserva a partir do carrinho
     });
 
     it('Carrinho vazio (400)', () => {
-
-    });
-
-    it('Alguns livros ficaram indisponíveis (400)', () => {
-
-    });
-
-    it('Exceder limite de reservas simultâneas (400)', () => {
-
-    });
-
-    it('Limpeza automática do carrinho', () => {
+        //limpar o carrinho
+        //tentar fazer reserva a partir do carrinho
 
     });
 
     it('Manter itens no carrinho (clearBasket=false)', () => {
-
+        //cadastrar um livro
+        //adicionar o carrinho
+        //fazer reserva a partir do carrinho mas com false pra clear basket
+        //checar carrinho de novo pra ver se o id do livro ta la ainda
     });
 
 });
@@ -183,11 +261,18 @@ describe('POST - Testes de Reservas de livros - Criar novas reservas a partir do
 describe('PUT - Testes de Reservas de livros - Atualizar reservas', () => {
 
     it('Deve cancelar reserva ativa (liberar o livro)', () => {
+        //fazer reserva do livro
+        //cancelar reserva
+        //buscar reserva e confirmar que nao ta mais ativa
 
     });
 
     it('Deve atualizar apenas as observações de uma reserva', () => {
 
+        //fazer uma reserva com obs
+        //atualizar apenas a obs da reserva
+
+        //limpar reserva
     });
 
 });
@@ -196,11 +281,14 @@ describe('PUT - Testes de Reservas de livros - Atualizar reservas', () => {
 describe('DELETE - Testes de Reservas de livros', () => {
 
     it('Deve cancela uma reserva ativa do usuário', () => {
+        //fazer uma reserva
+        //cancelar essa reserva
 
     });
 
      it('Não deve cancelar uma reserva de outro usuário', () => {
 
+        //tentar cancelar reserva de outro usuario
     });
 
 
