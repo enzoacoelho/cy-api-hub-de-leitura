@@ -23,6 +23,7 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+import { faker } from '@faker-js/faker';
 
 Cypress.Commands.add('gerarToken', (email, password) => {
     cy.api({
@@ -35,6 +36,65 @@ Cypress.Commands.add('gerarToken', (email, password) => {
     }).then((response) => {
         expect(response.status).equal(200)
         return response.body.token
+    })
+});
+
+Cypress.Commands.add('reservarLivro', (idBook) => {
+    cy.api({
+        method: 'POST',
+        url: 'reservations',
+        body: {
+            "bookId": idBook
+        },
+    }).then((response) => {
+        expect(response.status).equal(200)
+        return response.body.token
+    })
+});
+
+
+Cypress.Commands.add('criarLivro', () => {
+    const livroFake = {
+        title: faker.lorem.words(3),
+        author: faker.person.fullName(),
+        description: faker.lorem.paragraph(),
+        category: faker.helpers.arrayElement(['Ficção', 'Fantasia', 'Romance', 'Biografia', 'História']),
+        isbn: faker.string.numeric(13),
+        editor: faker.company.name(),
+        language: faker.helpers.arrayElement(['Português', 'Inglês', 'Espanhol']),
+        publication_year: faker.date.past(20).getFullYear(),
+        pages: 965,
+        format: faker.helpers.arrayElement(['Físico', 'Digital']),
+        total_copies: 50,
+        available_copies: 45
+    }
+
+    return livroFake;
+});
+
+Cypress.Commands.add('cadastrarLivro', (token, livro) => {
+    cy.api({
+        method: 'POST',
+        url: 'books',
+        headers: {'Authorization': token},
+        failOnStatusCode: false,
+        body: livro
+    }).then((response) => {
+        return response
+    })
+});
+
+Cypress.Commands.add('adicionarLivroCesta', (userID, bookID) => {
+    cy.api({
+        method: 'POST',
+        url: 'basket',
+        body: {
+        "userId": userID,
+        "bookId": bookID,
+        "quantity": 1
+        },
+    }).then((response) => {
+        expect(response.status).equal(200);
     })
 });
 

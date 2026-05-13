@@ -5,13 +5,28 @@ let token
 
 beforeEach(() => {
   
-
+cy.fixture('users').then((usuarios) => {
+        cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
+            token = tkn
+        });
+    }); 
 });
 
 describe('GET - Testes de Reservas de livros - Listar ', () => {
 
     it('Listar todas as reservas (sem filtros)', () => {
        
+    });
+
+    it('Deve impedir de listar todas reservas sem autorização', () => {
+       cy.api({
+            method: 'GET',
+            url: 'reservations'           
+        }).should(response => {
+            expect(response.status).equal(403);
+            expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.")
+            expect(response.body.error).to.equal("ADMIN_REQUIRED")
+        });
     });
 
     it('Listar com filtro por status específico', () => {

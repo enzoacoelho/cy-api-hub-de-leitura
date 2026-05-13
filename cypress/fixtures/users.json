@@ -2,11 +2,12 @@
   "admin": {
     "email": "admin@biblioteca.com",
     "password": "admin123",
-    "role": "admin"
+    "name": "Bibliotecário Admin"
   },
-  "comum": {
+  "padrao": {
     "email": "usuario@teste.com",
     "password": "user123",
-    "role": "user"
+    "name": "Usuário Padrão",
+    "userID": 1
   }
 }
