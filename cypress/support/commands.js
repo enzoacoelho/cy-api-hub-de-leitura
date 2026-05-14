@@ -115,17 +115,18 @@ Cypress.Commands.add('verCesta', (userID) => {
     })
 });
 
-Cypress.Commands.add('adicionarLivroCesta', (userID, bookID) => {
+Cypress.Commands.add('adicionarLivroCesta', (userID, bookID, token) => {
     cy.api({
         method: 'POST',
         url: 'basket',
+        headers: {'Authorization': token},
         body: {
         "userId": userID,
         "bookId": bookID,
         "quantity": 1
         },
     }).then((response) => {
-        expect(response.status).equal(200);
+        expect(response.status).equal(201);
     })
 });
 
@@ -148,6 +149,22 @@ Cypress.Commands.add('cancelarReserva', (reservaID, token) => {
         failOnStatusCode: false,
     }).then((response) => {
         return response
+    })
+});
+
+Cypress.Commands.add('cadastrarUsuario', (name, email, senha, token) => {
+    cy.api({
+        method: 'POST',
+        url: 'users',
+        headers: {'Authorization': token},
+        body: {
+            "name": name,
+            "email": email,
+            "password": senha
+        }
+    }).then((response) => {
+        expect(response.status).equal(201)
+        return response.body.user.id
     })
 });
 

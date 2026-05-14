@@ -40,12 +40,13 @@ describe('GET - Testes de Gestão de Usuários - Listar', () => {
     it('Tentar listar como usuário comum (403)', () => {
        cy.fixture('users').then((usuarios) => {
             cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-                tokenComum = tkn;
+                const tokenComum = tkn;
 
                 cy.api({
                     method: 'GET',
                     url: 'users',
-                    headers: { 'Authorization': tokenComum }
+                    failOnStatusCode: false,
+                    headers: { 'Authorization': tokenComum },
                 }).should(response => {
                     expect(response.status).equal(403);
                     expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
@@ -55,7 +56,7 @@ describe('GET - Testes de Gestão de Usuários - Listar', () => {
         });  
     });
 
-    it('Buscar por nome ou email', () => {
+    it('Buscar por nome', () => {
        cy.api({
             method: 'GET',
             url: 'users',
@@ -68,7 +69,7 @@ describe('GET - Testes de Gestão de Usuários - Listar', () => {
         }).should(response => {
             expect(response.status).equal(200);
             const usuarios = response.body.users;
-            expect(usuarios.name).equal("Usuário Padrão");
+            expect(usuarios[0].name).equal("Usuário Padrão");
 
         });
     });
@@ -109,6 +110,7 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
                 method: 'POST',
                 url: 'users',
                 headers: { 'Authorization': token },
+                failOnStatusCode: false,
                 body: {
                     "name": name,
                     "email": email,
@@ -127,10 +129,11 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
                 method: 'POST',
                 url: 'users',
                 headers: { 'Authorization': token },
+                failOnStatusCode: false,
                 body: {
                     "name": "nome aleatório",
                     "email": "email@hot.com",
-                    "password": 12
+                    "password": "12"
                 }
             }).should(response => {
                 expect(response.status).equal(400);
@@ -144,6 +147,7 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
             method: 'POST',
             url: 'users',
             headers: { 'Authorization': token },
+            failOnStatusCode: false,
             body: {
                 "name": "Maria Santos",
                 "email": "mariaemail.com",
@@ -161,6 +165,7 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
             method: 'POST',
             url: 'users',
             headers: { 'Authorization': token },
+            failOnStatusCode: false,
             body: {
                 "name": "M",
                 "email": "maria@email.com",
@@ -179,6 +184,7 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
             method: 'POST',
             url: 'users',
             headers: { 'Authorization': token },
+            failOnStatusCode: false,
             body: {
                 "name": "",
                 "email": "",
@@ -196,26 +202,27 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
 
 describe('PUT - Testes de Gestão de Usuários - Atulizar dados de usuário', () => {
 
-    let name = faker.person.fullName()
-    let email = faker.internet.email()
-    let senha = faker.internet.password()
+    it('Atualizar dados de um usuário', () => {
+        let name = faker.person.fullName()
+        let email = faker.internet.email()
+        let senha = faker.internet.password()
 
-    cy.cadastrarUsuario(name, email, senha).then(userID => {
-        cy.api({
-            method: 'PUT',
-            url: 'users/' + userID,
-            headers: { 'Authorization': token },
-            body: {
-                "name": name + ' Alterado',
-                "email": 'alterado' + email,
-                "password": senha
-            }
-        }).should(response => {
-            expect(response.status).equal(200);
-            expect(response.body.message).equal('Usuário atualizado com sucesso.');
+        cy.cadastrarUsuario(name, email, senha, token).then(userID => {
+            cy.api({
+                method: 'PUT',
+                url: 'users/' + userID,
+                headers: { 'Authorization': token },
+                body: {
+                    "name": name + ' Alterado',
+                    "email": 'alterado' + email,
+                    "password": senha
+                }
+            }).should(response => {
+                expect(response.status).equal(200);
+                expect(response.body.message).equal('Usuário atualizado com sucesso.');
+            });
         });
-    });
-    
+    });        
 });
 
 describe('DELETE - Testes de Gestão de Usuários - Remover usuário', () => {
@@ -225,7 +232,7 @@ describe('DELETE - Testes de Gestão de Usuários - Remover usuário', () => {
     let email = faker.internet.email()
     let senha = faker.internet.password()
 
-    cy.cadastrarUsuario(name, email, senha).then(userID => {
+    cy.cadastrarUsuario(name, email, senha, token).then(userID => {
         cy.api({
             method: 'DELETE',
             url: 'users/' + userID,

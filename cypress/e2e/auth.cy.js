@@ -17,7 +17,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
             }).then((response) => {
                 expect(response.status).equal(200)
                 expect(response.body.name).to.equal(name)
-                expect(response.body.isAdmin).to.be(true)
+                expect(response.body.isAdmin).to.be.true
             })
         });
     });
@@ -37,7 +37,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
             }).then((response) => {
                 expect(response.status).equal(200)
                 expect(response.body.name).to.equal(name)
-                expect(response.body.isAdmin).to.be(false)
+                expect(response.body.isAdmin).to.be.false
             })
         });
     });
@@ -50,6 +50,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
                 "email": "usuarioerrado@mail.com",
                 "password": "senha123"
             },
+            failOnStatusCode: false,
         }).then((response) => {
             expect(response.status).equal(401)
             expect(response.body.message).to.equal("Email ou senha incorretos.")
@@ -67,6 +68,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
                     "email": email,
                     "password": "erro123"
                 },
+                failOnStatusCode: false,
             }).then((response) => {
                 expect(response.status).equal(401)
                 expect(response.body.message).to.equal("Email ou senha incorretos.")
@@ -84,6 +86,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
                 "email": "",
                 "password": ""
             },
+            failOnStatusCode: false,
         }).then((response) => {
             expect(response.status).equal(400)
             expect(response.body.message).to.equal("Email e senha são obrigatórios.")
