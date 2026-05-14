@@ -7,7 +7,8 @@ beforeEach(() => {
 
     cy.fixture('users').then((usuarios) => {
         cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            token = tkn
+            token = tkn;
+            userID = usuarios.padrao.userID;
         });
     });
 
@@ -130,12 +131,12 @@ describe('POST - Testes de Reservas de livros - Criar novas reservas', () => {
             const bookTitle = livro.metamorfose.title;
 
             cy.api({
-            method: 'POST',
-            url: 'reservations',
-            headers: { 'Authorization': token },
-            body: {
-                "bookId": bookID
-            },
+                method: 'POST',
+                url: 'reservations',
+                headers: { 'Authorization': token },
+                body: {
+                    "bookId": bookID
+                },
             }).should(response => {
                 expect(response.status).to.eq(200);
                 expect(response.body.message).to.eq("Reserva criada com sucesso.");
@@ -144,58 +145,58 @@ describe('POST - Testes de Reservas de livros - Criar novas reservas', () => {
                 const res = response.body.reservation;
                 expect(res.id).to.be.a('number');
                 expect(res.bookId).to.eq(bookID);
-                expect(res.bookTitle).to.eq(bookTitle);   
-                
+                expect(res.bookTitle).to.eq(bookTitle);
+
                 const reservaID = res.id;
                 cy.cancelarReserva(reservaID, token);
-               
+
             });
         });
     });
 
     it('Reservar livro inexistente (404)', () => {
         cy.api({
-        method: 'POST',
-        url: 'reservations',
-        headers: { 'Authorization': token },
-        body: {
-            "bookId": 56566
-        },
+            method: 'POST',
+            url: 'reservations',
+            headers: { 'Authorization': token },
+            body: {
+                "bookId": 56566
+            },
         }).should(response => {
             expect(response.status).to.eq(404);
-            expect(response.body.message).to.eq("Livro não encontrado.");  
-            
-        });       
+            expect(response.body.message).to.eq("Livro não encontrado.");
+
+        });
     });
 
     it('Reservar mesmo livro duas vezes (400)', () => {
         cy.api({
-        method: 'POST',
-        url: 'reservations',
-        headers: { 'Authorization': token },
-        body: {
-            "bookId": 17
-        },
+            method: 'POST',
+            url: 'reservations',
+            headers: { 'Authorization': token },
+            body: {
+                "bookId": 17
+            },
         }).should(response => {
             expect(response.status).to.eq(200);
             expect(response.body.message).to.eq("Reserva criada com sucesso.");
-            expect(response.body.reservation).to.be.an('array'); 
+            expect(response.body.reservation).to.be.an('array');
             const res = response.body.reservation;
             const reservaID = res.id;
-            
+
         });
 
         cy.api({
-        method: 'POST',
-        url: 'reservations',
-        headers: { 'Authorization': token },
-        body: {
-            "bookId": 17
-        },
+            method: 'POST',
+            url: 'reservations',
+            headers: { 'Authorization': token },
+            body: {
+                "bookId": 17
+            },
         }).should(response => {
             expect(response.status).to.eq(400);
-            expect(response.body.message).to.eq("Você já possui uma reserva ativa para este livro.");  
-            
+            expect(response.body.message).to.eq("Você já possui uma reserva ativa para este livro.");
+
         });
         cy.cancelarReserva(reservaID, token);
     });
@@ -208,13 +209,13 @@ describe('POST - Testes de Reservas de livros - Criar novas reservas', () => {
             const note = "Livro necessário para trabalho";
 
             cy.api({
-            method: 'POST',
-            url: 'reservations',
-            headers: { 'Authorization': token },
-            body: {
-                "bookId": bookID,
-                "notes": note
-            },
+                method: 'POST',
+                url: 'reservations',
+                headers: { 'Authorization': token },
+                body: {
+                    "bookId": bookID,
+                    "notes": note
+                },
             }).should(response => {
                 expect(response.status).to.eq(200);
                 expect(response.body.message).to.eq("Reserva criada com sucesso.");
@@ -223,13 +224,13 @@ describe('POST - Testes de Reservas de livros - Criar novas reservas', () => {
                 const res = response.body.reservation;
                 expect(res.id).to.be.a('number');
                 expect(res.bookId).to.eq(bookID);
-                expect(res.bookTitle).to.eq(bookTitle);   
+                expect(res.bookTitle).to.eq(bookTitle);
 
                 expect(res.notes).to.eq(note);
-                
+
                 const reservaID = res.id;
                 cy.cancelarReserva(reservaID, token);
-               
+
             });
         });
     });
@@ -239,59 +240,188 @@ describe('POST - Testes de Reservas de livros - Criar novas reservas a partir do
 
     it('Carrinho com livros disponíveis (sucesso)', () => {
         //cadastrar um livro
-        //adicionar no carrinho
-        //fazer reserva a partir do carrinho
+        const livro = cy.criarLivro();
+        cy.cadastrarLivro(token, livro).then(response => {
+            let bookID = response.body.book.id;
+            let bookTitle = response.body.book.title;
+
+            //adicionar no carrinho
+            cy.adicionarLivroCesta(userID, bookID);
+
+            //fazer reserva a partir do carrinho
+            cy.api({
+                method: 'POST',
+                url: 'reservations/from-basket',
+                headers: { 'Authorization': token },
+                body: {
+                    "notes": "Livros para estudo do semestre",
+                    "clearBasket": true
+                },
+            }).then((response) => {
+                expect(response.status).equal(200);
+                expect(response.body.message).equal("1 reservas criadas com sucesso a partir do carrinho.");
+                expect(response.body.reservationsCreated).to.be.an('array');
+
+                const res = response.body.reservationsCreated;
+                expect(res.bookId).equal(bookID);
+                expect(res.bookTitle).equal(bookTitle);
+
+                const summary = response.body.summary;
+                expect(summary.totalItemsInBasket).equal(summary.successfulReservations);
+
+                expect(response.body.basketCleared).equal(true);
+
+                const instructions = response.body.instructions;
+                expect(instructions.message).equal("Todas as reservas foram criadas com prazo de 48h para retirada.");
+
+            });
+        });
+
     });
 
     it('Carrinho vazio (400)', () => {
         //limpar o carrinho
-        //tentar fazer reserva a partir do carrinho
+        cy.limparCesta(token, userID).then(response => {
+
+            expect(response.status).to.eq(200);
+            expect(response.body.message).to.equal("Cesta limpa com sucesso.");
+
+        });
+        cy.api({
+            method: 'POST',
+            url: 'reservations/from-basket',
+            headers: { 'Authorization': token },
+            body: {
+                "notes": "Livros para estudo do semestre",
+                "clearBasket": true
+            },
+        }).then((response) => {
+            expect(response.status).to.eq(400);
+            expect(response.body.message).to.equal("Carrinho está vazio. Adicione livros antes de criar reservas.");
+        });
 
     });
 
     it('Manter itens no carrinho (clearBasket=false)', () => {
         //cadastrar um livro
-        //adicionar o carrinho
-        //fazer reserva a partir do carrinho mas com false pra clear basket
-        //checar carrinho de novo pra ver se o id do livro ta la ainda
-    });
+        const livro = cy.criarLivro();
+        cy.cadastrarLivro(token, livro).then(response => {
+            let bookID = response.body.book.id;
+            let bookTitle = response.body.book.title;
 
+            //adicionar no carrinho
+            cy.adicionarLivroCesta(userID, bookID);
+            cy.verCesta(userID).then(response => {
+                livrosCesta = response.body.total;
+
+                //fazer reserva a partir do carrinho
+                cy.api({
+                    method: 'POST',
+                    url: 'reservations/from-basket',
+                    headers: { 'Authorization': token },
+                    body: {
+                        "notes": "Livros para estudo do semestre",
+                        "clearBasket": false
+                    },
+                }).then((response) => {
+                    expect(response.status).equal(200);
+                    expect(response.body.message).equal("1 reservas criadas com sucesso a partir do carrinho.");
+                    expect(response.body.reservationsCreated).to.be.an('array');
+
+                    const res = response.body.reservationsCreated;
+                    expect(res.bookId).equal(bookID);
+                    expect(res.bookTitle).equal(bookTitle);
+
+                    expect(response.body.basketCleared).equal(false);
+
+                    const instructions = response.body.instructions;
+                    expect(instructions.message).equal("Todas as reservas foram criadas com prazo de 48h para retirada.");
+
+                });
+
+                cy.verCesta(userID).then(res => {
+                    expect(res.body.total).to.equal(livrosCesta);
+                });
+
+            });
+
+        });
+    });
 });
 
 describe('PUT - Testes de Reservas de livros - Atualizar reservas', () => {
 
     it('Deve cancelar reserva ativa (liberar o livro)', () => {
         //fazer reserva do livro
+        const bookID = 17;
+        cy.reservarLivro(bookID).then(response => {
+            expect(response.status).to.eq(200);
+        });
         //cancelar reserva
-        //buscar reserva e confirmar que nao ta mais ativa
+        cy.api({
+            method: 'PUT',
+            url: `reservations/${bookID}`,
+            headers: { 'Authorization': token },
+            body: {
+                "action": "cancel"
+            },
+        }).then((response) => {
+            expect(response.status).to.eq(200);
+            expect(response.body.message).to.equal("Reserva cancelada com sucesso.");
+            const bookAvailability = response.body.bookAvailability;
 
+            expect(bookAvailability.message).to.equal("O livro foi liberado e está disponível para outros usuários.");
+        });
     });
 
     it('Deve atualizar apenas as observações de uma reserva', () => {
 
-        //fazer uma reserva com obs
-        //atualizar apenas a obs da reserva
+        const bookID = 17;
+        cy.reservarLivro(bookID).then(response => {
+            expect(response.status).to.eq(200);
+        });
+        //cancelar reserva
+        cy.api({
+            method: 'PUT',
+            url: `reservations/${bookID}`,
+            headers: { 'Authorization': token },
+            body: {
+                "action": "update_notes",
+                "notes": "Observações atualizadas sobre a reserva"
+            },
+        }).then((response) => {
+            expect(response.status).to.eq(200);
+            expect(response.body.message).to.equal("Observações atualizadas com sucesso.");
+            const reservation = response.body.reservation;
 
-        //limpar reserva
+            expect(reservation.newNotes).to.equal("Observações atualizadas sobre a reserva");
+        });
     });
-
 });
 
 
 describe('DELETE - Testes de Reservas de livros', () => {
 
     it('Deve cancela uma reserva ativa do usuário', () => {
-        //fazer uma reserva
-        //cancelar essa reserva
+        //fazer reserva do livro
+        const bookID = 17;
+        cy.reservarLivro(bookID).then(response => {
+            expect(response.status).to.eq(200);
+        });
+        //cancelar reserva
+        cy.api({
+            method: 'DELETE',
+            url: `reservations/${bookID}`,
+            headers: { 'Authorization': token }
+        }).then((response) => {
+            expect(response.status).to.eq(200);
+            expect(response.body.message).to.equal("Reserva cancelada com sucesso.");
+            const bookAvailability = response.body.bookAvailability;
+
+            expect(bookAvailability.message).to.equal("O livro foi liberado e está disponível para outros usuários.");
+        });
 
     });
-
-     it('Não deve cancelar uma reserva de outro usuário', () => {
-
-        //tentar cancelar reserva de outro usuario
-    });
-
-
 });
 
 

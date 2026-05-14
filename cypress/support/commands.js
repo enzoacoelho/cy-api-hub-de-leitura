@@ -96,6 +96,25 @@ Cypress.Commands.add('atualizarLivro', (token, bookID, livro) => {
     })
 });
 
+Cypress.Commands.add('limparCesta', (token, userID) => {
+    cy.api({
+        method: 'DELETE',
+        url: `basket/${userID}`,
+        headers: {'Authorization': token}
+    }).then((response) => {
+        return response
+    })
+});
+
+Cypress.Commands.add('verCesta', (userID) => {
+    cy.api({
+        method: 'GET',
+        url: `basket/${userID}`,
+    }).then((response) => {
+        return response
+    })
+});
+
 Cypress.Commands.add('adicionarLivroCesta', (userID, bookID) => {
     cy.api({
         method: 'POST',

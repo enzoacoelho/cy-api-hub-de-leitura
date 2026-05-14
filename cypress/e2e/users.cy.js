@@ -38,7 +38,21 @@ describe('GET - Testes de Gestão de Usuários - Listar', () => {
     });
 
     it('Tentar listar como usuário comum (403)', () => {
-       
+       cy.fixture('users').then((usuarios) => {
+            cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
+                tokenComum = tkn;
+
+                cy.api({
+                    method: 'GET',
+                    url: 'users',
+                    headers: { 'Authorization': tokenComum }
+                }).should(response => {
+                    expect(response.status).equal(403);
+                    expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
+                    expect(response.body.error).to.equal("ADMIN_REQUIRED");
+                });
+            });
+        });  
     });
 
     it('Buscar por nome ou email', () => {
@@ -49,10 +63,12 @@ describe('GET - Testes de Gestão de Usuários - Listar', () => {
             qs: {
                 page: 1,
                 limit: 20,
-                search: "Usuário"
+                search: "Usuário Padrão"
             }
         }).should(response => {
-            expect(response.status).equal(200)
+            expect(response.status).equal(200);
+            const usuarios = response.body.users;
+            expect(usuarios.name).equal("Usuário Padrão");
 
         });
     });
@@ -71,7 +87,7 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
         cy.api({
             method: 'POST',
             url: 'users',
-            //headers: { 'Authorization': token }
+            headers: { 'Authorization': token },
             body: {
                 "name": name,
                 "email": email,
@@ -85,10 +101,41 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
     });
 
     it('Email já existente (400)', () => {
+        cy.fixture('users').then((usuarios) => {
+            const name = usuarios.padrao.name;
+            const email = usuarios.padrao.email;
+            const password = usuarios.padrao.password;
+            cy.api({
+                method: 'POST',
+                url: 'users',
+                headers: { 'Authorization': token },
+                body: {
+                    "name": name,
+                    "email": email,
+                    "password": password
+                }
+            }).should(response => {
+                expect(response.status).equal(400);
+                expect(response.body.message).equal("Email já está sendo usado por outro usuário.");
+            });
+        });
        
     });
 
     it('Senha muito curta (400)', () => {
+        cy.api({
+                method: 'POST',
+                url: 'users',
+                headers: { 'Authorization': token },
+                body: {
+                    "name": "nome aleatório",
+                    "email": "email@hot.com",
+                    "password": 12
+                }
+            }).should(response => {
+                expect(response.status).equal(400);
+                expect(response.body.message).equal("Senha deve ter pelo menos 6 caracteres.");
+            });
        
     });
 
@@ -96,7 +143,7 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
        cy.api({
             method: 'POST',
             url: 'users',
-            //headers: { 'Authorization': token }
+            headers: { 'Authorization': token },
             body: {
                 "name": "Maria Santos",
                 "email": "mariaemail.com",
@@ -104,16 +151,44 @@ describe('POST - Testes de Gestão de Usuários - Criar novos usuários', () => 
             },
             failOnStatusCode: false
         }).should(response => {
-            expect(response.status).equal(400)
-            expect(response.body.message).equal('Formato de email inválido.')
+            expect(response.status).equal(400);
+            expect(response.body.message).equal('Formato de email inválido.');
         });
     });
 
     it('Nome muito curto (400)', () => {
+        cy.api({
+            method: 'POST',
+            url: 'users',
+            headers: { 'Authorization': token },
+            body: {
+                "name": "M",
+                "email": "maria@email.com",
+                "password": "senha123444"
+            },
+            failOnStatusCode: false
+        }).should(response => {
+            expect(response.status).equal(400);
+            expect(response.body.message).equal("Nome deve ter pelo menos 2 caracteres.");
+        });
        
     }); 
 
     it('Campos obrigatórios em branco (400)', () => {
+        cy.api({
+            method: 'POST',
+            url: 'users',
+            headers: { 'Authorization': token },
+            body: {
+                "name": "",
+                "email": "",
+                "password": ""
+            },
+            failOnStatusCode: false
+        }).should(response => {
+            expect(response.status).equal(400);
+            expect(response.body.message).equal("Nome, email e senha são obrigatórios.");
+        });
        
     }); 
     
@@ -136,34 +211,10 @@ describe('PUT - Testes de Gestão de Usuários - Atulizar dados de usuário', ()
                 "password": senha
             }
         }).should(response => {
-            expect(response.status).equal(200)
-            expect(response.body.message).equal('Usuário atualizado com sucesso.')
+            expect(response.status).equal(200);
+            expect(response.body.message).equal('Usuário atualizado com sucesso.');
         });
     });
-
-    it('Atualizar próprios dados (sucesso)', () => {
-       
-    });
-
-    it('Usuário comum tentar atualizar outro (403)', () => {
-       
-    });
-
-    it('Email já usado por outro usuário (400)', () => {
-       
-    });
-
-    it('Nova senha muito curta (400)', () => {
-       
-    }); 
-
-    it('Formato de email inválido (400)', () => {
-       
-    }); 
-
-    it('Atualização parcial (só alguns campos)', () => {
-       
-    }); 
     
 });
 
@@ -185,25 +236,5 @@ describe('DELETE - Testes de Gestão de Usuários - Remover usuário', () => {
         });
         })
     });
-
-    it('Admin remover usuário sem reservas ativas (sucesso)', () => {
-       
-    });
-
-    it('Admin tentar remover usuário com reservas ativas (400)', () => {
-       
-    });
-
-    it('Usuário comum tentar remover (403)', () => {
-       
-    });
-
-    it('ID inexistente (404)', () => {
-       
-    });
-
-    it('Verificar limpeza de dados relacionados', () => {
-       
-    }); 
     
 });
