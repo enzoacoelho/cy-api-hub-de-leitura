@@ -1,14 +1,17 @@
-Cypress.Commands.add('cadastrar', (name, email, senha) => {
-    cy.api({
+export const cadastrarUsuario = (name, email, senha, token) => {
+    return cy.api({
         method: 'POST',
         url: 'users',
+        headers: { Authorization: token },
         body: {
-            "name": name,
-            "email": email,
-            "password": senha
+            name,
+            email,
+            password: senha
         }
     }).then((response) => {
-        expect(response.status).equal(201)
+
+        expect(response.status).to.eq(201)
+
         return response.body.user.id
     })
-});
+}

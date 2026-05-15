@@ -1,34 +1,26 @@
-Cypress.Commands.add('cadastrar', (token, title, author, description, category,
-    isbn, editor, language, publication_year, pages, format, total_copies, available_copies
-) => {
-    cy.api({
+export const cadastrarLivro = (token, livro) => {
+    return cy.api({
         method: 'POST',
         url: 'books',
-        headers: {'Authorization': token},
+        headers: { Authorization: token },
         failOnStatusCode: false,
-        body: {
-            "title": title,
-            "author": author,
-            "description": description,
-            "category": category,
-            "isbn": isbn,
-            "editor": editor,
-            "language": language,
-            "publication_year": publication_year,
-            "pages": pages,
-            "format": format,
-            "total_copies": total_copies,
-            "available_copies": available_copies
-        }
-    }).then((response) => {
-        return response
+        body: livro
     })
-});
+}
 
+export const alterarLivro = (token, bookID, livro) => {
+    return cy.api({
+        method: 'PUT',
+        url: `books/${bookID}`,
+        headers: { Authorization: token },
+        failOnStatusCode: false,
+        body: livro
+    })
+}
 
+export const deletarLivro = (livroID, token) => {
 
-Cypress.Commands.add('deletar', (livroID, token) => {
-    cy.api({
+    return cy.api({
         method: 'DELETE',
         url: 'books/' + livroID,
         headers: {'Authorization': token},
@@ -36,4 +28,5 @@ Cypress.Commands.add('deletar', (livroID, token) => {
     }).then((response) => {
         return response
     })
-});
+}
+

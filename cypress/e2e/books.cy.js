@@ -1,7 +1,10 @@
 /// <reference types="cypress"/>
 import { faker } from '@faker-js/faker';
 
-let token
+import { criarLivro } from '../support/factory/book.js';
+import { cadastrarLivro, alterarLivro, deletarLivro } from '../support/requests/books.js';
+
+let token;
 
 beforeEach(() => {
     cy.fixture('users').then((usuarios) => {
@@ -41,7 +44,7 @@ describe('GET - Testes no Catálogo de Livros', () => {
                 url: `books/${livro.id}`
             }).should((response) => {
                 expect(response.status).to.eq(200);
-                
+
                 const { book } = response.body;
 
                 expect(book.id).to.eq(livro.id);
@@ -68,16 +71,16 @@ describe('GET - Testes no Catálogo de Livros', () => {
 describe('POST - Testes no Catálogo de Livros', () => {
 
     it('Deve cadastrar um novo livro com sucesso com usuário ADMINISTRADOR', () => {
-        cy.criarLivro().then((dadosLivro) => {
-            cy.cadastrarLivro(token, dadosLivro).then(response => {       
-                expect(response.status).to.equal(201);
-                expect(response.body.message).to.equal("Livro criado com sucesso.");
-                expect(response.body.book).to.exist;
-                
-                expect(response.body.book.title).to.equal(dadosLivro.title);
-                expect(response.body.book.isbn).to.equal(dadosLivro.isbn);
-            });
-        });              
+        const dadosLivro = criarLivro();
+        cadastrarLivro(token, dadosLivro).then(response => {
+            expect(response.status).to.equal(201);
+            expect(response.body.message).to.equal("Livro criado com sucesso.");
+            expect(response.body.book).to.exist;
+
+            expect(response.body.book.title).to.equal(dadosLivro.title);
+            expect(response.body.book.isbn).to.equal(dadosLivro.isbn);
+        });
+
     });
 
     it('Cenário Negativo - Não deve permitir que usuário PADRÃO cadastre um livro', () => {
@@ -85,35 +88,35 @@ describe('POST - Testes no Catálogo de Livros', () => {
             cy.gerarToken(usuario.padrao.email, usuario.padrao.password).then(tkn => {
                 const tokenPadrao = tkn;
 
-                cy.criarLivro().then((dadosLivro) => {
-                    cy.cadastrarLivro(tokenPadrao, dadosLivro).then(response => {
-        
+                const dadosLivro = criarLivro();
+                cadastrarLivro(tokenPadrao, dadosLivro).then(response => {
+
                     expect(response.status).to.equal(403);
                     expect(response.body.message).to.equal('Acesso negado. Apenas administradores podem realizar esta ação.');
 
-                    });
-                });   
+                });
+
             });
         });
     });
 
     it('Cenário Negativo - Não deve cadastrar um novo livro com campos obrigatórios em branco', () => {
         const livroComCamposVazios = {
-        title: "",          // Campo que deve causar o erro 400
-        author: "",
-        description: "descrição do livro",
-        category: "",
-        isbn: "",
-        editor: "Edita XY",
-        language: "Português",
-        publication_year: 1989,
-        pages: "",
-        format: "Físico",
-        total_copies: 9,
-        available_copies: 5
+            title: "",          // Campo que deve causar o erro 400
+            author: "",
+            description: "descrição do livro",
+            category: "",
+            isbn: "",
+            editor: "Edita XY",
+            language: "Português",
+            publication_year: 1989,
+            pages: "",
+            format: "Físico",
+            total_copies: 9,
+            available_copies: 5
         };
 
-        cy.cadastrarLivro(token, livroComCamposVazios).then(response => {
+        cadastrarLivro(token, livroComCamposVazios).then(response => {
             expect(response.status).to.equal(400)
             expect(response.body.message).to.equal("\"title\" is not allowed to be empty")
         });
@@ -121,12 +124,12 @@ describe('POST - Testes no Catálogo de Livros', () => {
 
     it('Cenário Negativo - Não deve cadastrar um livro que já existe no catalogo', () => {
         cy.fixture('books').then((livros) => {
-        const livroExistente = livros.arte_da_guerra_sem_id;
+            const livroExistente = livros.arte_da_guerra_sem_id;
 
-        //Tenta cadastrar o mesmo livro
-        cy.cadastrarLivro(token, livroExistente).then(response => {
-            expect(response.status).to.equal(400);
-            expect(response.body.message).to.equal("Já existe um livro com este título e autor.");
+            //Tenta cadastrar o mesmo livro
+            cadastrarLivro(token, livroExistente).then(response => {
+                expect(response.status).to.equal(400);
+                expect(response.body.message).to.equal("Já existe um livro com este título e autor.");
             });
         });
     });
@@ -135,88 +138,88 @@ describe('POST - Testes no Catálogo de Livros', () => {
 describe('PUT - Testes no Catálogo de Livros', () => {
 
     it('PUT - Deve atualizar um livro previamente cadastrado - Dinamico', () => {
-        cy.criarLivro().then((dadosLivro) => {
+        const dadosLivro = criarLivro();
 
         //Cadastra o livro para ter um ID para alterar
-            cy.cadastrarLivro(token, dadosLivro).then(resPost => {
-                expect(resPost.status).to.equal(201);
-                const livroID = resPost.body.book.id;
+        cadastrarLivro(token, dadosLivro).then(resPost => {
+            expect(resPost.status).to.equal(201);
+            const livroID = resPost.body.book.id;
 
-                // Cria o objeto com os dados alterados (mantendo o resto igual)
-                const livroAlterado = {
-                    ...dadosLivro,
-                    title: dadosLivro.title + ' Alterado',
-                    author: dadosLivro.author + ' Alterado',
-                    description: dadosLivro.description + ' Alterado'   
+            // Cria o objeto com os dados alterados (mantendo o resto igual)
+            const livroAlterado = {
+                ...dadosLivro,
+                title: dadosLivro.title + ' Alterado',
+                author: dadosLivro.author + ' Alterado',
+                description: dadosLivro.description + ' Alterado'
 
-                };
+            };
 
-                cy.alterarLivro(token, livroID, livroAlterado).then(resPut => {
-                    expect(resPut.status).to.equal(200);
-                    expect(resPut.body.message).to.equal("Livro atualizado com sucesso.");
-                    
-                    // Valida se os campos foram alterados
-                    expect(resPut.body.bookId).to.equal(livroID);
-                    expect(resPut.body.updatedFields).to.include('title');
-                    expect(resPut.body.updatedFields).to.include('author');
-                    expect(resPut.body.updatedFields).to.include('description');
-                });
+            alterarLivro(token, livroID, livroAlterado).then(resPut => {
+                expect(resPut.status).to.equal(200);
+                expect(resPut.body.message).to.equal("Livro atualizado com sucesso.");
+
+                // Valida se os campos foram alterados
+                expect(resPut.body.bookId).to.equal(livroID);
+                expect(resPut.body.updatedFields).to.include('title');
+                expect(resPut.body.updatedFields).to.include('author');
+                expect(resPut.body.updatedFields).to.include('description');
             });
-        });     
+        });
+
     });
 
     it('PUT - Cenário Negativo - Não deve permitir que usuário PADRÃO atualize um livro', () => {
 
         cy.fixture('users').then((usuarios) => {
             cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            const tokenPadrao = tkn;
+                const tokenPadrao = tkn;
 
-                cy.criarLivro().then((dadosLivro) => {
-                    cy.atualizarLivro(tokenPadrao, 1, dadosLivro).then(response => {
-                        expect(response.status).to.equal(403);
-                        expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
-                        expect(response.body.error).to.equal("ADMIN_REQUIRED");
-                    });        
+                const dadosLivro = criarLivro();
+                alterarLivro(tokenPadrao, 1, dadosLivro).then(response => {
+                    expect(response.status).to.equal(403);
+                    expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
+                    expect(response.body.error).to.equal("ADMIN_REQUIRED");
                 });
+
             });
-        });             
-    });    
+        });
+    });
 });
 
 describe('DELETE - Testes no Catálogo de Livros', () => {
 
     it('DELETE - Deve deletar um livro previamente cadastrado', () => {
-        cy.criarLivro().then((dadosLivro) => {
+        const dadosLivro = criarLivro();
 
-            cy.cadastrarLivro(token, dadosLivro).then(response => {
-                expect(response.status).to.equal(201);
-                expect(response.body.message).to.equal("Livro criado com sucesso.");
+        cadastrarLivro(token, dadosLivro).then(response => {
+            expect(response.status).to.equal(201);
+            expect(response.body.message).to.equal("Livro criado com sucesso.");
 
-                let livroID = response.body.book.id;
+            let livroID = response.body.book.id;
 
-                cy.deletarLivro(livroID, token).then(response => {
-                    expect(response.status).to.equal(200)
-                    expect(response.body.message).to.equal("Livro deletado com sucesso.")
+            deletarLivro(livroID, token).then(response => {
+                expect(response.status).to.equal(200)
+                expect(response.body.message).to.equal("Livro deletado com sucesso.")
 
-                });
             });
-        });               
+        });
+       
     });
-    
+
 
     it('DELETE - Cenario Negativo - Não deve permitir que usuário COMUM delete um livro', () => {
         cy.fixture('users').then((usuarios) => {
             cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            const tokenPadrao = tkn;
+                const tokenPadrao = tkn;
 
-                cy.deletarLivro(1, tokenPadrao).then(response => {
+                deletarLivro(1, tokenPadrao).then(response => {
                     expect(response.status).to.equal(403);
                     expect(response.body.message).to.equal("Acesso negado. Apenas administradores podem realizar esta ação.");
                     expect(response.body.error).to.equal("ADMIN_REQUIRED");
-                });        
-            });  
-        });         
-    });        
+                });
+            });
+        });
+    });
 });
 
 

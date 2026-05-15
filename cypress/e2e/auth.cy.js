@@ -42,7 +42,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
         });
     });
 
-    it('Email inexistente', () => {        
+    it('Email inexistente', () => {
         cy.api({
             method: 'POST',
             url: 'login',
@@ -55,7 +55,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
             expect(response.status).equal(401)
             expect(response.body.message).to.equal("Email ou senha incorretos.")
             expect(response.body.error).to.equal("INVALID_CREDENTIALS")
-        });        
+        });
     });
 
     it('Senha incorreta', () => {
@@ -79,7 +79,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
     });
 
     it('Campos obrigatórios em branco', () => {
-         cy.api({
+        cy.api({
             method: 'POST',
             url: 'login',
             body: {
@@ -91,7 +91,7 @@ describe('POST - Testes de Autenticação - Login com ADMIN e Usuário Padrão',
             expect(response.status).equal(400)
             expect(response.body.message).to.equal("Email e senha são obrigatórios.")
             expect(response.body.error).to.equal("MISSING_FIELDS")
-        });      
+        });
     });
 
 });
