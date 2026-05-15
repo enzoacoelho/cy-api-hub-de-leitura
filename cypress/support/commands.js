@@ -39,15 +39,16 @@ Cypress.Commands.add('gerarToken', (email, password) => {
     })
 });
 
-Cypress.Commands.add('reservarLivro', (idBook) => {
+Cypress.Commands.add('reservarLivro', (idBook, token) => {
     cy.api({
         method: 'POST',
         url: 'reservations',
+        headers: {'Authorization': token},
         body: {
             "bookId": idBook
         },
     }).then((response) => {
-        expect(response.status).equal(200)
+        expect(response.status).equal(201)
         return response.body.token
     })
 });
@@ -106,10 +107,11 @@ Cypress.Commands.add('limparCesta', (token, userID) => {
     })
 });
 
-Cypress.Commands.add('verCesta', (userID) => {
+Cypress.Commands.add('verCesta', (userID, token) => {
     cy.api({
         method: 'GET',
         url: `basket/${userID}`,
+        headers: {'Authorization': token}
     }).then((response) => {
         return response
     })
@@ -178,6 +180,30 @@ Cypress.Commands.add('alterarLivro', (token, livroID, livroAlterado) => {
     }).then((response) => {
         return response
     })
+});
+
+Cypress.Commands.add('limparReservas', (token) => {
+    cy.api({
+        method: 'GET',
+        url: 'reservations', 
+        headers: { 'Authorization': token },
+        qs: { status: "active" }, 
+        failOnStatusCode: false
+    }).then((response) => {
+        // Verifica se existem reservas no array
+        if (response.body.reservations && response.body.reservations.length > 0) {
+            const reservas = response.body.reservations;
+            
+            // Percorre o array de reservas e cancela cada uma pelo ID
+            reservas.forEach((reserva) => {
+                cy.cancelarReserva(reserva.id, token);
+            });
+            
+            cy.log(`Limpeza concluída: ${reservas.length} reservas removidas.`);
+        } else {
+            cy.log('Nenhuma reserva encontrada para limpar.');
+        }
+    });
 });
 
 
