@@ -33,6 +33,21 @@
     "cover_image": "arte-da-guerra.jpg",
     "created_at": "2025-07-27 22:05:36"
   },
+  "arte_da_guerra_sem_id": {
+    "title": "A Arte da Guerra",
+    "author": "Sun Tzu",
+    "description": "A Arte da Guerra é um tratado militar chinês com ensinamentos sobre táticas, estratégias e inteligência. Seus princípios são aplicados não apenas em guerras, mas também em negócios, política e vida pessoal.",
+    "category": "Estratégia",
+    "isbn": "978-85-AUTO-0006-8",
+    "editor": "Editora Nova Fronteira",
+    "language": "Português",
+    "publication_year": 2008,
+    "pages": 256,
+    "format": "Físico",
+    "total_copies": 6,
+    "available_copies": 6,
+    "cover_image": "arte-da-guerra.jpg"    
+  },
   "divina_comedia": {
     "id": 17,
     "title": "A Divina Comédia",

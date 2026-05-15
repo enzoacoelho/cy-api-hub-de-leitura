@@ -168,6 +168,17 @@ Cypress.Commands.add('cadastrarUsuario', (name, email, senha, token) => {
     })
 });
 
+Cypress.Commands.add('alterarLivro', (token, livroID, livroAlterado) => {
+    cy.api({
+        method: 'PUT',
+        url: 'books/' + livroID,
+        headers: {'Authorization': token},
+        failOnStatusCode: false,
+        body: livroAlterado          
+    }).then((response) => {
+        return response
+    })
+});
 
 
 
