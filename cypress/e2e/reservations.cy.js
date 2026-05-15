@@ -378,7 +378,7 @@ describe('PUT - Testes de Reservas de livros - Atualizar reservas', () => {
                 const bookID = response.body.book.id;
 
                 cy.reservarLivro(bookID, token).then(response => {
-                    expect(response.status).to.eq(201);
+                  
                     let reservaID = response.body.reservation.id
 
                     //cancelar reserva

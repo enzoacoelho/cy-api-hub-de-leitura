@@ -206,5 +206,19 @@ Cypress.Commands.add('limparReservas', (token) => {
     });
 });
 
+Cypress.Commands.add('alterarReserva', (token, reservaID, novoStatus, notaDinamica) => {
+    cy.api({
+        method: 'PUT',
+        url: `admin/reservations/${reservaID}`,
+        headers: {'Authorization': token},
+        body: {
+            status: novoStatus,
+            notes: notaDinamica
+        }       
+    }).then((response) => {
+        return response
+    })
+});
+
 
 
