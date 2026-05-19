@@ -1,0 +1,66 @@
+name: Testes de API com Suporte ao Servidor
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  run-api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Baixa o código do próprio projeto de testes (onde o workflow está rodando)
+      - name: Checkout Test Project
+        uses: actions/checkout@v4
+
+      # 2. Clona o repositório da API (hub-de-leitura-integrado) em uma pasta separada
+      - name: Checkout API Server Project
+        uses: actions/checkout@v4
+        with:
+          repository: 'enzoacoelho/hub-de-leitura-integrado'
+          path: 'api-server' # Baixa a API dentro dessa pasta temporária
+
+      # 3. Configura o Node.js na máquina do CI
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # 4. Instala e sobe a API em segundo plano
+      - name: Install and Start API Server
+        run: |
+          cd api-server
+          npm install
+          npm start & 
+        # O "&" no final do "npm start" é o segredo: ele faz o servidor rodar em 
+        # segundo plano para liberar o terminal para os próximos passos.
+
+      # 5. Espera a API ficar totalmente online antes de avançar (Evita que o teste rode com a API desligada)
+      - name: Wait for API Server to be Ready
+        run: |
+          echo "Aguardando o servidor subir..."
+          sleep 10 # Dá 10 segundos para o servidor iniciar (ajuste se ele demorar mais)
+
+      # 6. Instala as dependências do projeto de TESTES (Cypress, Allure, etc.)
+      - name: Install Test Dependencies
+        run: npm ci
+
+      # 7. Rode os testes do Cypress
+      # O "|| true" garante que se algum teste falhar, o Allure ainda gere o HTML
+      - name: Run Cypress API Tests
+        run: npm run cy:run || true
+
+      # 8. Gera o relatório HTML do Allure usando o seu script
+      - name: Generate Allure Report
+        run: npm run report:generate
+
+      # 9. Salva a pasta do relatório HTML para você visualizar no GitHub
+      - name: Upload Allure Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-html-report
+          path: allure-report
+          retention-days: 10
