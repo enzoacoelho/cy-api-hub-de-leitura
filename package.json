@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "report:generate": "allure generate allure-results --clean -o allure-report"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/enzoacoelho/hub-de-leitura-api-teste/issues"
   },
-  "homepage": "https://github.com/enzoacoelho/hub-de-leitura-api-teste#readme"
+  "homepage": "https://github.com/enzoacoelho/hub-de-leitura-api-teste#readme",
+  "devDependencies": {
+    "allure-commandline": "^2.41.0",
+    "allure-cypress": "^3.8.0"
+  }
 }
