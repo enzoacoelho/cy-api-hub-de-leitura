@@ -35,10 +35,8 @@ jobs:
           cd api-server
           npm install
           npm start & 
-        # O "&" no final do "npm start" é o segredo: ele faz o servidor rodar em 
-        # segundo plano para liberar o terminal para os próximos passos.
-
-      # 5. Espera a API ficar totalmente online antes de avançar (Evita que o teste rode com a API desligada)
+    
+      # 5. Espera a API ficar totalmente online antes de avançar
       - name: Wait for API Server to be Ready
         run: |
           echo "Aguardando o servidor subir..."
@@ -49,15 +47,14 @@ jobs:
         run: npm ci
 
       # 7. Rode os testes do Cypress
-      # O "|| true" garante que se algum teste falhar, o Allure ainda gere o HTML
       - name: Run Cypress API Tests
         run: npm run cy:run || true
 
-      # 8. Gera o relatório HTML do Allure usando o seu script
+      # 8. Gera o relatório HTML do Allure 
       - name: Generate Allure Report
-        run: npm run report:generate
+        run: npm run allure:generate
 
-      # 9. Salva a pasta do relatório HTML para você visualizar no GitHub
+      # 9. Salva a pasta do relatório HTML 
       - name: Upload Allure Report Artifact
         uses: actions/upload-artifact@v4
         with:
