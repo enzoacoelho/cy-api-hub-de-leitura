@@ -1,8 +1,8 @@
 /// <reference types="cypress"/>
 import { faker } from '@faker-js/faker';
 
-import { criarLivro } from '../support/factory/book.js';
-import { cadastrarLivro, alterarLivro, deletarLivro } from '../support/requests/books.js';
+import { criarLivro } from '../../support/factory/book.js';
+import { cadastrarLivro, alterarLivro, deletarLivro } from '../../support/requests/books.js';
 
 let token;
 

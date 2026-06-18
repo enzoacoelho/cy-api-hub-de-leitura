@@ -1,10 +1,10 @@
 /// <reference types="cypress"/>
 import { faker } from '@faker-js/faker';
 
-import { reservarLivro, alterarReserva } from '../support/requests/reservations.js';
-import { criarLivro } from '../support/factory/book.js';
-import { cadastrarLivro } from '../support/requests/books';
-import { limparReservas } from '../support/workflows/cleanReservations.js';
+import { reservarLivro, alterarReserva } from '../../support/requests/reservations.js';
+import { criarLivro } from '../../support/factory/book.js';
+import { cadastrarLivro } from '../../support/requests/books.js';
+import { limparReservas } from '../../support/workflows/cleanReservations.js';
 
 let token;
 let tokenPadrao;

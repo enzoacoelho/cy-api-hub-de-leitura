@@ -1,7 +1,7 @@
 /// <reference types="cypress"/>
 import { faker } from '@faker-js/faker';
 
-import { cadastrarUsuario } from '../support/requests/users.js';
+import { cadastrarUsuario } from '../../support/requests/users.js';
 
 let token;
 

@@ -38,6 +38,19 @@ Cypress.Commands.add('gerarToken', (email, password) => {
     })
 })
 
+Cypress.Commands.add('login', (email, password, failOnStatusCode) => {    
+    return cy.api({
+        method: 'POST',
+        url: 'login',
+        body: {
+            "email": email,
+            "password": password
+        },
+        failOnStatusCode: failOnStatusCode
+    })
+})
+
+
 
 
 
