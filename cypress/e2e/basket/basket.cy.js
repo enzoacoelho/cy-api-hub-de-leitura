@@ -2,7 +2,7 @@
 import { faker } from '@faker-js/faker';
 import { criarLivro } from '../../support/factory/book.js';
 import { cadastrarLivro } from '../../support/requests/books.js';
-import { limparCesta, adicionarLivroCesta, verCesta } from '../../support/requests/basket.js';
+import { limparCesta, limparCestaById, adicionarLivroCesta, verCesta } from '../../support/requests/basket.js';
 
 let tokenPadrao;
 let tokenAdmin;
@@ -37,8 +37,7 @@ describe('GET - Consultas e listagens - api/basket/:userID', () => {
 
     it('Deve listar itens da cesta', () => {
         //adicionar um livro na cesta
-        const quantidade = 1
-        adicionarLivroCesta(userID, bookID, quantidade, tokenPadrao)
+        adicionarLivroCesta(userID, bookID, tokenPadrao)
 
         //validação de satus 
         verCesta(userID, tokenPadrao).then(response => {
@@ -84,8 +83,7 @@ describe('POST - Ações na cesta - api/basket', () => {
 
     it('Deve adicionar um livro à cesta com sucesso', () => {
         //adicionar um livro especifico
-        const quantidade = 1
-        adicionarLivroCesta(userID, bookID, quantidade, tokenPadrao).then(response => {
+        adicionarLivroCesta(userID, bookID, tokenPadrao).then(response => {
              //validar
             expect(response.status).to.eq(201);
             expect(response.body.message).to.equal("Livro adicionado ao carrinho com sucesso.");
@@ -97,15 +95,14 @@ describe('POST - Ações na cesta - api/basket', () => {
 
     it('Não deve adicionar o livro à cesta duas vezes', () => {
         //adicionar um livro especifico
-        const quantidade = 1
-        adicionarLivroCesta(userID, bookID, quantidade, tokenPadrao).then(response => {
+        adicionarLivroCesta(userID, bookID, tokenPadrao).then(response => {
              //validar
             expect(response.status).to.eq(201);
             expect(response.body.message).to.equal("Livro adicionado ao carrinho com sucesso.");
         })      
 
         //tentar adicionar novamente o mesmo livro
-        adicionarLivroCesta(userID, bookID, quantidade, tokenPadrao, false).then(response => {
+        adicionarLivroCesta(userID, bookID, tokenPadrao, 1, false).then(response => {
              //validar
             expect(response.status).to.eq(400);
             expect(response.body.message).to.equal("Livro já está no carrinho.");
@@ -114,7 +111,7 @@ describe('POST - Ações na cesta - api/basket', () => {
 
     it('Não deve adicionar livro inexistente', () => {
         const idBook = 4522
-        adicionarLivroCesta(userID, idBook, quantidade, tokenPadrao, false).then(response => {
+        adicionarLivroCesta(userID, idBook, tokenPadrao, 1, false).then(response => {
             expect(response.status).to.eq(404);
             expect(response.body.message).to.eq("Livro não encontrado.");
         });
@@ -122,7 +119,7 @@ describe('POST - Ações na cesta - api/basket', () => {
 
     it('Não deve adicionar mais de um livro à cesta de uma vez', () => {
         const quantidade = 2
-        adicionarLivroCesta(userID, bookID, quantidade, tokenPadrao, false).then((response) => {
+        adicionarLivroCesta(userID, bookID, tokenPadrao, quantidade, false).then((response) => {
             expect(response.status).to.eq(400);
             expect(response.body.message).to.eq("Quantidade deve ser 1 para livros.");
 
@@ -132,9 +129,8 @@ describe('POST - Ações na cesta - api/basket', () => {
     it('Não deve adicionar à cesta de outro usuário (403)', () => {
         //id diferente do user (1) que ta nesse tokenPadrao
         const randomUserID = 45
-        const quantidade = 1
 
-        adicionarLivroCesta(randomUserID, bookID, quantidade, tokenPadrao, false).should((resBasket) => {
+        adicionarLivroCesta(randomUserID, bookID, tokenPadrao, 1, false).should((resBasket) => {
             expect(resBasket.status).to.eq(403);
             expect(resBasket.body.message).to.eq("Acesso negado. Você só pode adicionar ao seu próprio carrinho.");
 
@@ -151,16 +147,16 @@ describe('DELETE - Limpar cesta completa - api/basket/:userId', () => {
             adicionarLivroCesta(userID, idBookCreated, tokenPadrao);
             adicionarLivroCesta(userID, bookID, tokenPadrao);
 
-            limparCesta(userID, token).then((response) => {
+            limparCesta(userID, tokenPadrao).then((response) => {
                 expect(response.status).to.eq(200);
                 expect(response.body.message).to.eq("Carrinho limpo com sucesso.");
-                expect(response.body.itemsRemoved).to.eq(resBasket.body.previousItemCount);
+                expect(response.body.itemsRemoved).to.eq(response.body.previousItemCount);
             });
         });
     });
 
-    it('Limpar cesta já vazia (sucesso)', () => {
-        limparCesta(userID, token).then((response) => {
+    it('Deve limpar cesta já vazia (sucesso)', () => {
+        limparCesta(userID, tokenPadrao).then((response) => {
             expect(response.status).to.eq(200);
             expect(response.body.message).to.eq("Carrinho já estava vazio.");
             expect(response.body.itemsRemoved).to.eq(0);
@@ -168,84 +164,57 @@ describe('DELETE - Limpar cesta completa - api/basket/:userId', () => {
         });
     });
 
-    it('Tentar limpar cesta de outro usuário (403)', () => {
-        cy.api({
-            method: 'DELETE',
-            url: 'basket/4',
-            headers: { 'Authorization': token },
-            failOnStatusCode: false
-        }).should((resBasket) => {
-            expect(resBasket.status).to.eq(403);
-            expect(resBasket.body.message).to.eq("Acesso negado. Você só pode limpar seu próprio carrinho.");
+    it('Não deve limpar cesta de outro usuário (403)', () => {
+        const randomUserID = 4 //ID DIFERENTE DO ID DO USUARIO/TOKEN
+        limparCesta(4, tokenPadrao, false).then((response) => {
+            expect(response.status).to.eq(403);
+            expect(response.body.message).to.eq("Acesso negado. Você só pode limpar seu próprio carrinho.");
 
         });
     });
 });
 
-describe('DELETE - Testes de Cesta de Livros - Remover item específico', () => {
+describe('DELETE - Limpar itens especificos da cesta - api/basket/:userId/:bookId', () => {
 
-    it('Remover item existente na cesta (sucesso)', () => {
-        const livro = criarLivro();
+    it('Deve remover item da cesta com sucesso', () => {
+        //criar livro como adm
+        const livro = criarLivro();        
         cadastrarLivro(tokenAdmin, livro).then(res => {
-            const bookID = res.body.book.id;
-            const bookTitle = res.body.book.title;
-            adicionarLivroCesta(userID, bookID, token);
+            const idBook = res.body.book.id;
+            const titleBook = res.body.book.title;
 
-            cy.api({
-                method: 'DELETE',
-                url: `basket/${userID}/${bookID}`,
-                headers: { 'Authorization': token }
-            }).should((resBasket) => {
-                expect(resBasket.status).to.eq(200);
-                expect(resBasket.body.message).to.eq("Item removido do carrinho com sucesso.");
+            //adicionar na cesta como usuario comum
+            
+            adicionarLivroCesta(userID, idBook, tokenPadrao);
 
-                const { removedItem } = resBasket.body;
+            //deletar o item da cesta com sucesso
+            limparCestaById(userID, idBook, tokenPadrao).then((response) => {
+                //validar
+                expect(response.status).to.eq(200);
+                expect(response.body.message).to.eq("Item removido do carrinho com sucesso.");
+
+                const { removedItem } = response.body;
                 expect(removedItem).to.have.all.keys('bookId', 'bookTitle', 'bookAuthor');
-                expect(removedItem.bookId).to.eq(bookID);
-                expect(removedItem.bookTitle).to.eq(bookTitle);             
-
+                expect(removedItem.bookId).to.eq(idBook);
+                expect(removedItem.bookTitle).to.eq(titleBook);
             });
-        });         
+        });           
     });
 
-    it('Remover item que não está na cesta (404)', () => {
-        const bookID = 8;
-        cy.api({
-            method: 'DELETE',
-            url: `basket/${userID}/${bookID}`,
-            headers: { 'Authorization': token },
-            failOnStatusCode: false
-        }).should((resBasket) => {
-            expect(resBasket.status).to.eq(404);
-            expect(resBasket.body.message).to.eq("Item não encontrado no carrinho.");
+    it('Não deve remover item que não está na cesta (404)', () => {
+        limparCestaById(userID, bookID, tokenPadrao, false).then((response) => {
+            expect(response.status).to.eq(404);
+            expect(response.body.message).to.eq("Item não encontrado no carrinho.");
 
         });
     });
 
-    it('IDs inválidos (400)', () => {
-        const bookID = 33338;
-        cy.api({
-            method: 'DELETE',
-            url: `basket/${userID}/${bookID}`,
-            headers: { 'Authorization': token },
-            failOnStatusCode: false
-        }).should((resBasket) => {
-            expect(resBasket.status).to.eq(404);
-            expect(resBasket.body.message).to.eq("Item não encontrado no carrinho.");
+    it('Não deve remover de cesta de outro usuário (403)', () => {
+        const randomUserID = 45;
 
-        });
-    });
-
-    it('Tentar remover de cesta de outro usuário (403)', () => {
-        const bookID = 8;
-        cy.api({
-            method: 'DELETE',
-            url: `basket/3/${bookID}`,
-            headers: { 'Authorization': token },
-            failOnStatusCode: false
-        }).should((resBasket) => {
-            expect(resBasket.status).to.eq(403);
-            expect(resBasket.body.message).to.eq("Acesso negado. Você só pode modificar seu próprio carrinho.");
+        limparCestaById(randomUserID, bookID, tokenPadrao, false).then((response) => {
+            expect(response.status).to.eq(403);
+            expect(response.body.message).to.eq("Acesso negado. Você só pode modificar seu próprio carrinho.");
 
         });
     });

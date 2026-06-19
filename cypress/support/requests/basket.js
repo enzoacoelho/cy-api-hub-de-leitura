@@ -13,6 +13,22 @@ export const limparCesta = (userID, token, failOnStatusCode='') => {
     })
 }
 
+export const limparCestaById = (userID, bookID, token, failOnStatusCode='') => {
+    const failStatus = failOnStatusCode
+
+    if (failStatus){
+        failStatus = true
+    }
+
+    return cy.api({
+        method: 'DELETE',
+        url: `basket/${userID}/${bookID}`,
+        headers: { Authorization: token },
+        failOnStatusCode: failStatus
+    })
+}
+
+
 export const verCesta = (userID, token, failOnStatusCode) => {
     const failStatus = failOnStatusCode
 
@@ -28,7 +44,7 @@ export const verCesta = (userID, token, failOnStatusCode) => {
     })
 }
 
-export const adicionarLivroCesta = (userID, bookID, quantity, token, failOnStatusCode) => {
+export const adicionarLivroCesta = (userID, bookID, token, quantity = 1, failOnStatusCode) => {
     const failStatus = failOnStatusCode
 
     if (failStatus){
