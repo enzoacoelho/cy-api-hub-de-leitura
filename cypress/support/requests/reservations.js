@@ -2,6 +2,7 @@ export const create = (idBook, token) => {
     return cy.api({
         method: 'POST',
         url: 'reservations',
+        failOnStatusCode: false,
         headers: {
             Authorization: token
         },
@@ -15,6 +16,7 @@ export const createWithNotes = (idBook, notes, token) => {
     return cy.api({
         method: 'POST',
         url: 'reservations',
+        failOnStatusCode: false,
         headers: {
             Authorization: token
         },
@@ -22,6 +24,19 @@ export const createWithNotes = (idBook, notes, token) => {
             bookId: idBook,
             notes: notes
         }
+    })
+}
+
+export const createFromBasket = (token, notes, clearBasket) => {
+    return cy.api({
+        method: 'POST',
+        url: 'reservations/from-basket',
+        failOnStatusCode: false,
+        headers: { Authorization: token },
+        body: {
+            notes: notes,
+            clearBasket: clearBasket
+        },
     })
 }
 
@@ -53,11 +68,24 @@ export const cancel = (reservaID, token) => {
     })
 }
 
+export const alterAction = (reservaID, token, action) => {
+    return cy.api({
+        method: 'PUT',
+        url: `reservations/${reservaID}`,
+        headers: { 'Authorization': token },
+        failOnStatusCode: false,
+        body: {
+            action: action
+        }
+    })
+}
+
 export const alter = (token, reservaID, novoStatus, notaDinamica) => {
     return cy.api({
         method: 'PUT',
         url: `admin/reservations/${reservaID}`,
         headers: { Authorization: token },
+        failOnStatusCode: false,
         body: {
             status: novoStatus,
             notes: notaDinamica

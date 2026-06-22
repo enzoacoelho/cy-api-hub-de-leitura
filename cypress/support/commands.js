@@ -40,7 +40,7 @@ Cypress.Commands.add('gerarToken', (email, password) => {
     })
 })
 
-Cypress.Commands.add('login', (email, password, failOnStatusCode) => {    
+Cypress.Commands.add('login', (email, password, failOnStatusCode) => {
     return cy.api({
         method: 'POST',
         url: 'login',
@@ -52,7 +52,7 @@ Cypress.Commands.add('login', (email, password, failOnStatusCode) => {
     })
 })
 
-Cypress.Commands.add('registerBook', (token, book) => {    
+Cypress.Commands.add('registerBook', (token, book) => {
     return cy.api({
         method: 'POST',
         url: 'books',
@@ -62,7 +62,7 @@ Cypress.Commands.add('registerBook', (token, book) => {
     })
 })
 
-Cypress.Commands.add('createAndRegisterBook', (token) => {    
+Cypress.Commands.add('createAndRegisterBook', (token) => {
     const livro = createBook()
     return cy.api({
         method: 'POST',
@@ -73,19 +73,49 @@ Cypress.Commands.add('createAndRegisterBook', (token) => {
     })
 })
 
-Cypress.Commands.add('createAndReserveBook', (tokenAdmin, tokenPadrao) => {    
+Cypress.Commands.add('createAndReserveBook', (tokenAdmin, tokenPadrao) => {
     return cy.createAndRegisterBook(tokenAdmin).then(response => {
-        const book = bookResponse.body.book
+        const book = response.body.book
 
-        reservesActions.create(book.id, tokenPadrao)
+        reserveActions.create(book.id, tokenPadrao).then(res => {
+            const reservation = res.body.reservation
 
-        cy.wrap({
-            id: book.id,
-            title: book.title
+            cy.wrap({
+                id: book.id,
+                title: book.title,
+                reserveId: reservation.id
+            })
+
         })
 
     })
 })
+
+Cypress.Commands.add('clearBasket', (token, userID) => {
+    return cy.api({
+        method: 'DELETE',
+        url: `basket/${userID}`,
+        headers: { Authorization: token },
+        failOnStatusCode: false
+    })
+})
+
+Cypress.Commands.add('addBookBasket', (userID, bookID, token, quantity = 1) => {
+    return cy.api({
+        method: 'POST',
+        url: 'basket',
+        headers: { Authorization: token },
+        body: {
+            userId: userID,
+            bookId: bookID,
+            quantity: quantity
+        },
+        failOnStatusCode: false
+    })
+})
+
+
+
 
 
 
