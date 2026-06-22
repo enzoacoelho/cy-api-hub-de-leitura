@@ -1,56 +1,28 @@
 /// <reference types="cypress"/>
 
-describe('GET - Testes de monitoramento da saúde do sistema', () => {
+import { checkHealth, checkInfos } from '../../support/requests/system'
 
-    it('Verificar status do servidor', () => {
-        cy.api({
-            method: 'GET',
-            url: 'health'
-        }).then((response) => {
-            expect(response.status).equal(200)
-            expect(response.body.status).to.equal("ok")
-        });
+describe('GET - Testes de monitoramento da saúde do sistema - /api/health', () => {
 
-    });
-
-    it('Verificar conexão com banco de dados e serviços disponíveis', () => {
-        cy.api({
-            method: 'GET',
-            url: 'health'
-        }).then((response) => {
+    it('Verificar status do servidor, conexao com banco e serviços disponíveis', () => {
+        checkHealth().then((response) => {
             expect(response.status).equal(200)
             expect(response.body.services.database).to.equal("connected")
             expect(response.body.services.auth).to.equal("working")
             expect(response.body.services.swagger).to.equal("active")
-        });
-
-    });
-
-    it('Verificar versão da API', () => {
-        cy.api({
-            method: 'GET',
-            url: 'health'
-        }).then((response) => {
-            expect(response.status).equal(200)
             expect(response.body.version).to.equal("1.0.0")
-        });
+        })
+    })
+})
 
-    });
-
-});
-
-describe('GET - Informações gerais', () => {
+describe('GET - Informações gerais da API - /api/info', () => {
     it('Retornar informações gerais sobre a API e endpoints disponíveis', () => {
-        cy.api({
-            method: 'GET',
-            url: 'info'
-        }).then((response) => {
+        checkInfos().then((response) => {
             expect(response.status).equal(200)
-            expect(response.body.name).to.equal("Hub de Leitura API")
+
+            expect(response.body.name).equal("Hub de Leitura API")
             expect(response.body.description).to.equal("Sistema de biblioteca para aprendizado de QA")
-        });
-
-    });
-
-});
+        })
+    })
+})
 

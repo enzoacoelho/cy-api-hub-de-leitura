@@ -24,6 +24,8 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 import { faker } from '@faker-js/faker';
+import { createBook } from '../support/factory/book';
+import * as reserveActions from '../support/requests/reservations';
 
 Cypress.Commands.add('gerarToken', (email, password) => {
     return cy.api({
@@ -49,6 +51,45 @@ Cypress.Commands.add('login', (email, password, failOnStatusCode) => {
         failOnStatusCode: failOnStatusCode
     })
 })
+
+Cypress.Commands.add('registerBook', (token, book) => {    
+    return cy.api({
+        method: 'POST',
+        url: 'books',
+        headers: { Authorization: token },
+        failOnStatusCode: false,
+        body: book
+    })
+})
+
+Cypress.Commands.add('createAndRegisterBook', (token) => {    
+    const livro = createBook()
+    return cy.api({
+        method: 'POST',
+        url: 'books',
+        headers: { Authorization: token },
+        failOnStatusCode: false,
+        body: livro
+    })
+})
+
+Cypress.Commands.add('createAndReserveBook', (tokenAdmin, tokenPadrao) => {    
+    return cy.createAndRegisterBook(tokenAdmin).then(response => {
+        const book = bookResponse.body.book
+
+        reservesActions.create(book.id, tokenPadrao)
+
+        cy.wrap({
+            id: book.id,
+            title: book.title
+        })
+
+    })
+})
+
+
+
+
 
 
 

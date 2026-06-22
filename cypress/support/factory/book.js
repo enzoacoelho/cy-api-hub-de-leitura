@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 
-export const criarLivro = () => {
+export const createBook = () => {
 
     return {
         title: faker.lorem.words(3),
