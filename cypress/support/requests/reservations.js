@@ -1,38 +1,38 @@
-export const create = (idBook, token) => {
+export const create = (bookId, tokenPadrao) => {
     return cy.api({
         method: 'POST',
         url: 'reservations',
         failOnStatusCode: false,
         headers: {
-            Authorization: token
+            Authorization: tokenPadrao
         },
         body: {
-            bookId: idBook
+            bookId: bookId
         }
     })
 }
 
-export const createWithNotes = (idBook, notes, token) => {
+export const createWithNotes = (bookId, notes, tokenPadrao) => {
     return cy.api({
         method: 'POST',
         url: 'reservations',
         failOnStatusCode: false,
         headers: {
-            Authorization: token
+            Authorization: tokenPadrao
         },
         body: {
-            bookId: idBook,
+            bookId: bookId,
             notes: notes
         }
     })
 }
 
-export const createFromBasket = (token, notes, clearBasket) => {
+export const createFromBasket = (tokenPadrao, notes, clearBasket) => {
     return cy.api({
         method: 'POST',
         url: 'reservations/from-basket',
         failOnStatusCode: false,
-        headers: { Authorization: token },
+        headers: { Authorization: tokenPadrao },
         body: {
             notes: notes,
             clearBasket: clearBasket
@@ -40,39 +40,39 @@ export const createFromBasket = (token, notes, clearBasket) => {
     })
 }
 
-export const getReservations = (token) => {
+export const getReservations = (tokenPadrao) => {
     return cy.api({
         method: 'GET',
         url: 'reservations',
-        headers: { Authorization: token },
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false
     })
 }
 
-export const getReservationsByStatus = (token, status) => {
+export const getReservationsByStatus = (tokenPadrao, status) => {
     return cy.api({
         method: 'GET',
         url: 'reservations',
         qs: { status: status },
-        headers: { Authorization: token },
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false
     })
 }
 
-export const cancel = (reservaID, token) => {
+export const cancel = (reservationId, tokenPadrao) => {
     return cy.api({
         method: 'DELETE',
-        url: 'reservations/' + reservaID,
-        headers: { Authorization: token },
+        url: 'reservations/' + reservationId,
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false
     })
 }
 
-export const alterAction = (reservaID, token, action) => {
+export const alterAction = (reservationId, tokenPadrao, action) => {
     return cy.api({
         method: 'PUT',
-        url: `reservations/${reservaID}`,
-        headers: { 'Authorization': token },
+        url: `reservations/${reservationId}`,
+        headers: { 'Authorization': tokenPadrao },
         failOnStatusCode: false,
         body: {
             action: action
@@ -80,24 +80,24 @@ export const alterAction = (reservaID, token, action) => {
     })
 }
 
-export const alter = (token, reservaID, novoStatus, notaDinamica) => {
+export const alter = (tokenPadrao, reservationId, newStatus, notes) => {
     return cy.api({
         method: 'PUT',
-        url: `admin/reservations/${reservaID}`,
-        headers: { Authorization: token },
+        url: `admin/reservations/${reservationId}`,
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false,
         body: {
-            status: novoStatus,
-            notes: notaDinamica
+            status: newStatus,
+            notes: notes
         }
     })
 }
 
-export const cleanAll = (token) => {
+export const cleanAll = (tokenPadrao) => {
     return cy.api({
         method: 'GET',
         url: 'reservations',
-        headers: { Authorization: token },
+        headers: { Authorization: tokenPadrao },
         qs: { status: "active" },
         failOnStatusCode: false
     }).then((response) => {
@@ -107,7 +107,7 @@ export const cleanAll = (token) => {
             const reservas = response.body.reservations
 
             reservas.forEach((reserva) => {
-                cancel(reserva.id, token)
+                cancel(reserva.id, tokenPadrao)
             })
 
             cy.log(`Limpeza concluída: ${reservas.length} reservas removidas.`)

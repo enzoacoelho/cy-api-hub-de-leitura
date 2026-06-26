@@ -126,9 +126,9 @@ describe('DELETE - Gerenciamento do catálogo de livros (apenas ADMIN) - api/boo
         const dadosLivro = createBook()
 
         cy.registerBook(tokenAdmin, dadosLivro).then(response => {
-            const livroID = response.body.book.id
+            const bookId = response.body.book.id
 
-            booksActions.removeById(livroID, tokenAdmin).then(response => {
+            booksActions.removeById(bookId, tokenAdmin).then(response => {
                 expect(response.status).to.equal(200)
                 expect(response.body.message).to.equal("Livro deletado com sucesso.")
             })

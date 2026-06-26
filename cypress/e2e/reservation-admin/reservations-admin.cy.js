@@ -1,200 +1,169 @@
 /// <reference types="cypress"/>
-import { faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker'
 
-import * as reserveActions from '../../support/requests/reservations.js'
+import * as resAdmin from '../../support/requests/reservations-admin'
+import { describe } from 'mocha'
 
-let token;
-let tokenPadrao;
-let userPadraoID;
+let tokenAdmin
+let tokenPadrao
+let userId
 
 beforeEach(() => {
     cy.fixture('users').then((usuarios) => {
         cy.gerarToken(usuarios.admin.email, usuarios.admin.password).then(tkn => {
-            token = tkn;
-        });
+            tokenAdmin = tkn
+        })
 
         cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            tokenPadrao = tkn;
-            userPadraoID = usuarios.padrao.id;
-        });
-    });
-});
+            tokenPadrao = tkn
+            userId = usuarios.padrao.id
+        })
+    })
 
-describe('GET - Testes de Reservas de livros - Listar ', () => {
+    cy.clearReservation(tokenPadrao)
+})
 
-    it('Listar todas as reservas', () => {
-        cy.api({
-            method: 'GET',
-            url: 'admin/reservations',
-            headers: { 'Authorization': token }
-        }).should(response => {
+describe('GET - Admin Reservas - api/admin/reservations ', () => {
+    it('Deve listar todas as reservas', () => {
+        resAdmin.getReservations(tokenAdmin).should(response => {
             expect(response.status).equal(200)
             expect(response.body.reservations).be.an('array')
-        });
-    });
+        })
+    })
 
-    it('Deve impedir de listar todas reservas sem autorização', () => {
-        cy.api({
-            method: 'GET',
-            url: 'admin/reservations',
-            headers: { 'Authorization': tokenPadrao },
-            failOnStatusCode: false,
-        }).should(response => {
+    it('Não deve listar todas reservas sem autorização', () => {
+        resAdmin.getReservations(tokenPadrao).should(response => {
             expect(response.status).equal(403)
-        });
-    });
+            expect(response.body.message).equal('Acesso negado. Apenas administradores podem realizar esta ação.')
+            expect(response.body.requiredRole).equal('admin')
+        })
+    })
+    
+})
 
-    it('Listar reserva por ID do livro e usuário', () => {
-        limparReservas(tokenPadrao);
+describe('GET - Buscar por reservas com filtros - api/admin/reservations/search', () => {
+    it('Deve listar reserva por ID do livro e usuário', () => {
+        cy.createAndReserveBook(tokenAdmin, tokenPadrao).then(reservation => {
+            const bookId = reservation.bookId
+            const reservationId = reservation.id
 
-        const livro = criarLivro();
+            resAdmin.searchReservation(tokenAdmin, userId, bookId).then(response => {
+                expect(response.status).to.eq(200)
+                expect(response.body).to.not.be.empty
+                expect(response.body.reservations[0].id).to.eq(reservaID)
+                expect(response.body.reservations[0].user_id).to.eq(1)
+                expect(response.body.reservations[0].book_id).to.eq(bookID)
 
+            })
+        })
+    })
+})
 
-        cadastrarLivro(token, livro).then(res => {
-            const bookID = res.body.book.id;
-
-            reservarLivro(bookID, tokenPadrao).then(response => {
-                let reservaID = response.body.reservation.id;
-
-                cy.api({
-                    method: 'GET',
-                    url: 'admin/reservations/search',
-                    headers: { 'Authorization': token },
-                    body: {
-                        "userId": userPadraoID,
-                        "status": "active",
-                        "bookId": bookID
-                    }
-                }).should(response => {
-                    expect(response.status).to.eq(200);
-                    expect(response.body).to.not.be.empty;
-                    expect(response.body.reservations[0].id).to.eq(reservaID);
-                    expect(response.body.reservations[0].user_id).to.eq(1);
-                    expect(response.body.reservations[0].book_id).to.eq(bookID);
-
-                });
-            });
-        });
-
-
-    });
-
+describe('GET - Estatísticas das reservas - api/admin/reservations/stats', () => {
     it('Deve garantir que o endpoint de estatísticas retorna a estrutura correta', () => {
-        cy.api({
-            method: 'GET',
-            url: 'admin/reservations/stats',
-            headers: { 'Authorization': token }
-        }).should((response) => {
-            expect(response.status).to.eq(200);
+        resAdmin.getStats(tokenAdmin).then((response) => {
+            expect(response.status).to.eq(200)
 
-            expect(response.body).to.have.property('stats');
-            const { stats } = response.body;
+            expect(response.body).to.have.property('stats')
+            const { stats } = response.body
 
-            expect(stats.active).to.be.a('number');
-            expect(stats.pickedUp).to.be.a('number');
-            expect(stats.returned).to.be.a('number');
-            expect(stats.overdue).to.be.a('number');
-            expect(stats.active).to.be.at.least(0);
-        });
-    });
+            expect(stats.active).to.be.a('number')
+            expect(stats.pickedUp).to.be.a('number')
+            expect(stats.returned).to.be.a('number')
+            expect(stats.overdue).to.be.a('number')
+            expect(stats.active).to.be.at.least(0)
+        })
+    })
+})
 
-});
-
-describe('PUT - Testes de Reservas de livros', () => {
-
+describe('PUT - Atualizar status de reservas - api/admin/reservations/:id', () => {
     it('Deve atualizar status de uma reserva com sucesso', () => {
+        cy.createAndReserveBook(tokenAdmin, tokenPadrao).then(reservation => {
+            const bookId = reservation.bookId
+            const reservationId = reservation.id
+            const notes = 'Nota de teste'
+            const newStatus = 'picked-up'
 
-        limparReservas(tokenPadrao);
-        const livro = criarLivro();
+            resAdmin.alterStatus(reservationId, tokenAdmin, newStatus, notes).then((responsePut) => {
+                expect(responsePut.status).to.eq(200)
 
-        cadastrarLivro(token, livro).then(res => {
-            const bookID = res.body.book.id;
+                expect(responsePut.body.message).to.eq('Status da reserva atualizado com sucesso.')
+                expect(responsePut.body.reservationId).to.eq(reservationId)
+                expect(responsePut.body.newStatus).to.eq(newStatus)
 
-            const txtAleatorio = faker.lorem.words(4);
-            const notaDinamica = `Nota de teste: ${txtAleatorio}`;
-            const novoStatus = 'picked-up';
+                expect(responsePut.body.updatedFields.status).to.eq(newStatus)
+                expect(responsePut.body.updatedFields.notes).to.eq(notes)
 
-            reservarLivro(bookID, tokenPadrao).then(res => {
-                let reservaID = res.body.reservation.id;
-                cy.api({
-                    method: 'PUT',
-                    url: `admin/reservations/${reservaID}`,
-                    headers: { 'Authorization': token },
-                    body: {
-                        status: novoStatus,
-                        notes: notaDinamica
-                    }
-                }).should((responsePut) => {
-                    expect(responsePut.status).to.eq(200);
-                    expect(responsePut.body.updatedFields.notes).to.eq(notaDinamica);
+            })
+        })
+    })   
+    
+    it('Não deve atualizar com um status inválido', () => {
+        cy.createAndReserveBook(tokenAdmin, tokenPadrao).then(reservation => {
+            const bookId = reservation.bookId
+            const reservationId = reservation.id
+            const notes = 'Nota de teste'
+            const newStatus = '43434-up'
 
-                });
+            resAdmin.alterStatus(reservationId, tokenAdmin, newStatus, notes).then((responsePut) => {
+                expect(responsePut.status).to.eq(400)
+                expect(responsePut.body.message).to.eq('Status inválido.')
+            })
+        })
+    }) 
 
-                limparReservas(tokenPadrao);
-            });
-        });
+    it('Não deve atualizar com um status vazio', () => {
+        cy.createAndReserveBook(tokenAdmin, tokenPadrao).then(reservation => {
+            const bookId = reservation.bookId
+            const reservationId = reservation.id
+            const notes = 'Nota de teste'
+            const newStatus = ''
 
+            resAdmin.alterStatus(reservationId, tokenAdmin, newStatus, notes).then((responsePut) => {
+                expect(responsePut.status).to.eq(400)
+                expect(responsePut.body.message).to.eq('ID da reserva e status são obrigatórios.')               
+            })
+        })
+    })     
+}) 
 
+describe('PUT - Extender prazos de devoluçoes das reservas - api/admin/reservations/:id/extend', () => {
+    it('Deve estender prazo de devolução', () => {
+        //criar livro, cadastrar no sistema e reservar
+        //guardar o book ID setar dias para 7
+        //guardar numero de reserva 
 
-    });
+        cy.createAndReserveBook(tokenAdmin, tokenPadrao).then(reservation => {
+            const bookId = reservation.bookId
+            const extendDays = 7
+            const reservationId = reservation.id
 
-    it('Estender prazo de devolução', () => {
-        //limpa e faz uma reserva no usuário padrão para teste
-        limparReservas(tokenPadrao);
+            resAdmin.extendReturnDate(tokenAdmin, reservationId, extendDays).then(response => {
+                expect(response.status).to.eq(200)
+                expect(response.body.message).to.eq(`Prazo estendido por ${extendDays} dia(s) com sucesso.`)
 
-        const livro = criarLivro();
+                //Cálculo e Comparação de Datas
+                const dataAnterior = new Date(response.body.previousDeadline)
+                const dataNova = new Date(response.body.newDeadline)
 
-        cadastrarLivro(token, livro).then(res => {
+                // Calcula a diferença em milissegundos e converte para dias
+                const diferencaEmMs = dataNova.getTime() - dataAnterior.getTime()
+                const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24))
 
-            const bookID = res.body.book.id;
-            const diasParaExtender = 7;
+                // Valida se a diferença é exatamente o que enviamos no body
+                expect(diferencaEmDias).to.eq(extendDays)
 
-            reservarLivro(bookID, tokenPadrao).then(res => {
-                let idReserva = res.body.reservation.id;
+                //Validação do campo dayExtended
+                expect(response.body.daysExtended).to.eq(extendDays)
 
-                const txtAleatorio = faker.lorem.words(4);
-                const notaDinamica = `Nota de teste: ${txtAleatorio}`;
-                const novoStatus = 'picked-up';
-
-                alterarReserva(token, idReserva, novoStatus, notaDinamica).then(response => {
-
-                    cy.api({
-                        method: 'PUT',
-                        url: `admin/reservations/${idReserva}/extend`,
-                        headers: { 'Authorization': token },
-                        body: {
-                            days: diasParaExtender
-                        }
-                    }).should((responsePut) => {
-                        expect(responsePut.status).to.eq(200);
-                        expect(responsePut.body.message).to.eq(`Prazo estendido por ${diasParaExtender} dia(s) com sucesso.`);
-
-                        //Cálculo e Comparação de Datas
-                        const dataAnterior = new Date(responsePut.body.previousDeadline);
-                        const dataNova = new Date(responsePut.body.newDeadline);
-
-                        // Calcula a diferença em milissegundos e converte para dias
-                        const diferencaEmMs = dataNova.getTime() - dataAnterior.getTime();
-                        const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24));
-
-                        // Valida se a diferença é exatamente o que enviamos no body
-                        expect(diferencaEmDias).to.eq(diasParaExtender);
-
-                        //Validação do campo dayExtended
-                        expect(responsePut.body.daysExtended).to.eq(diasParaExtender);
-
-                    });
+            })
+        })
+    })
+})
 
 
-                    limparReservas(tokenPadrao);
 
-                });
 
-            });
-
-        });
-    });
-});
 
 
 

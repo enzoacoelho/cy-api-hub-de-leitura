@@ -1,8 +1,8 @@
-export const create = (token, livro) => {
+export const create = (tokenAdmin, livro) => {
     return cy.api({
         method: 'POST',
         url: 'books',
-        headers: { Authorization: token },
+        headers: { Authorization: tokenAdmin },
         failOnStatusCode: false,
         body: livro
     })
@@ -45,21 +45,21 @@ export const getAuthors = () => {
     })
 }
 
-export const update = (token, bookId, livro) => {
+export const update = (tokenAdmin, bookId, livro) => {
     return cy.api({
         method: 'PUT',
         url: `books/${bookId}`,
-        headers: { Authorization: token },
+        headers: { Authorization: tokenAdmin },
         failOnStatusCode: false,
         body: livro
     })
 }
 
-export const removeById = (bookId, token) => {
+export const removeById = (bookId, tokenAdmin) => {
     return cy.api({
         method: 'DELETE',
         url: `books/${bookId}`,
-        headers: { 'Authorization': token },
+        headers: { 'Authorization': tokenAdmin },
         failOnStatusCode: false
     })
 }

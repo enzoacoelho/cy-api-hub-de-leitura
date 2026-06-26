@@ -1,39 +1,39 @@
-export const clear = (userID, token) => {
+export const clear = (userId, tokenPadrao) => {
     return cy.api({
         method: 'DELETE',
-        url: `basket/${userID}`,
-        headers: { Authorization: token },
+        url: `basket/${userId}`,
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false
     })
 }
 
-export const clearById = (userID, bookID, token) => {
+export const clearById = (userId, bookId, tokenPadrao) => {
     return cy.api({
         method: 'DELETE',
-        url: `basket/${userID}/${bookID}`,
-        headers: { Authorization: token },
+        url: `basket/${userId}/${bookId}`,
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false
     })
 }
 
 
-export const getBasket = (userID, token) => {
+export const getBasket = (userId, tokenPadrao) => {
     return cy.api({
         method: 'GET',
-        url: `basket/${userID}`,
-        headers: { Authorization: token },
+        url: `basket/${userId}`,
+        headers: { Authorization: tokenPadrao },
         failOnStatusCode: false
     })
 }
 
-export const addBooks = (userID, bookID, token, quantity = 1) => {
+export const addBooks = (userId, bookId, tokenPadrao, quantity = 1) => {
     return cy.api({
         method: 'POST',
         url: 'basket',
-        headers: { Authorization: token },
+        headers: { Authorization: tokenPadrao },
         body: {
-            userId: userID,
-            bookId: bookID,
+            userId: userId,
+            bookId: bookId,
             quantity: quantity
         },
         failOnStatusCode: false

@@ -3,16 +3,6 @@ import { faker } from '@faker-js/faker'
 import { criarLivro } from '../../support/factory/book.js'
 import * as booksActions from '../../support/requests/books.js'
 
-let token
-
-beforeEach(() => {
-    cy.fixture('users').then((usuarios) => {
-        cy.gerarToken(usuarios.admin.email, usuarios.admin.password).then(tkn => {
-            token = tkn
-        })
-    })
-})
-
 describe('GET - Listar livros - /api/books', () => {
     it('Deve listar livros do catalogo', () => {
 

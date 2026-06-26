@@ -1,4 +1,4 @@
-export const cadastrarUsuario = (name, email, senha, token) => {
+export const cadastrarUsuario = (name, email, password, token) => {
     return cy.api({
         method: 'POST',
         url: 'users',
@@ -6,7 +6,7 @@ export const cadastrarUsuario = (name, email, senha, token) => {
         body: {
             name,
             email,
-            password: senha
+            password: password
         }
     }).then((response) => {
 
