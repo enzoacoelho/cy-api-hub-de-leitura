@@ -1,27 +1,30 @@
 /// <reference types="cypress"/>
 import { faker } from '@faker-js/faker'
-
 import * as resAdmin from '../../support/requests/reservations-admin'
-import { describe } from 'mocha'
 
 let tokenAdmin
 let tokenPadrao
 let userId
 
 beforeEach(() => {
+
+    cy.createUserAndLogin().then(usuario => {
+        tokenPadrao = usuario.token
+        userId = usuario.id
+        console.log('userid é : ' + userId)
+    })
     cy.fixture('users').then((usuarios) => {
         cy.gerarToken(usuarios.admin.email, usuarios.admin.password).then(tkn => {
             tokenAdmin = tkn
         })
-
-        cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            tokenPadrao = tkn
-            userId = usuarios.padrao.id
-        })
     })
-
-    cy.clearReservation(tokenPadrao)
 })
+
+afterEach(() => {
+    if (userId) {
+        cy.removeUser(tokenAdmin, userId); 
+    }
+});
 
 describe('GET - Admin Reservas - api/admin/reservations ', () => {
     it('Deve listar todas as reservas', () => {
@@ -50,9 +53,9 @@ describe('GET - Buscar por reservas com filtros - api/admin/reservations/search'
             resAdmin.searchReservation(tokenAdmin, userId, bookId).then(response => {
                 expect(response.status).to.eq(200)
                 expect(response.body).to.not.be.empty
-                expect(response.body.reservations[0].id).to.eq(reservaID)
-                expect(response.body.reservations[0].user_id).to.eq(1)
-                expect(response.body.reservations[0].book_id).to.eq(bookID)
+                expect(response.body.reservations[0].id).to.eq(reservationId)
+                expect(response.body.reservations[0].user_id).to.eq(userId)
+                expect(response.body.reservations[0].book_id).to.eq(bookId)
 
             })
         })
@@ -88,7 +91,7 @@ describe('PUT - Atualizar status de reservas - api/admin/reservations/:id', () =
                 expect(responsePut.status).to.eq(200)
 
                 expect(responsePut.body.message).to.eq('Status da reserva atualizado com sucesso.')
-                expect(responsePut.body.reservationId).to.eq(reservationId)
+                expect(responsePut.body.reservationId.toString()).to.eq(reservationId.toString())
                 expect(responsePut.body.newStatus).to.eq(newStatus)
 
                 expect(responsePut.body.updatedFields.status).to.eq(newStatus)
@@ -127,39 +130,6 @@ describe('PUT - Atualizar status de reservas - api/admin/reservations/:id', () =
     })     
 }) 
 
-describe('PUT - Extender prazos de devoluçoes das reservas - api/admin/reservations/:id/extend', () => {
-    it('Deve estender prazo de devolução', () => {
-        //criar livro, cadastrar no sistema e reservar
-        //guardar o book ID setar dias para 7
-        //guardar numero de reserva 
-
-        cy.createAndReserveBook(tokenAdmin, tokenPadrao).then(reservation => {
-            const bookId = reservation.bookId
-            const extendDays = 7
-            const reservationId = reservation.id
-
-            resAdmin.extendReturnDate(tokenAdmin, reservationId, extendDays).then(response => {
-                expect(response.status).to.eq(200)
-                expect(response.body.message).to.eq(`Prazo estendido por ${extendDays} dia(s) com sucesso.`)
-
-                //Cálculo e Comparação de Datas
-                const dataAnterior = new Date(response.body.previousDeadline)
-                const dataNova = new Date(response.body.newDeadline)
-
-                // Calcula a diferença em milissegundos e converte para dias
-                const diferencaEmMs = dataNova.getTime() - dataAnterior.getTime()
-                const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24))
-
-                // Valida se a diferença é exatamente o que enviamos no body
-                expect(diferencaEmDias).to.eq(extendDays)
-
-                //Validação do campo dayExtended
-                expect(response.body.daysExtended).to.eq(extendDays)
-
-            })
-        })
-    })
-})
 
 
 

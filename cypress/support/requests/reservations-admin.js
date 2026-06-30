@@ -37,8 +37,8 @@ export const alterStatus = (reservationId, tokenAdmin, newStatus, notes) => {
         headers: { 'Authorization': tokenAdmin },
         failOnStatusCode: false,
         body: {
-            status: novoStatus,
-            notes: notaDinamica
+            status: newStatus,
+            notes: notes
         }
     })
 }

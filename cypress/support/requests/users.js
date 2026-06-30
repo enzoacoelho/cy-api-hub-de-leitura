@@ -1,17 +1,25 @@
-export const cadastrarUsuario = (name, email, password, token) => {
+export const getUserById = (token, userId) => {
     return cy.api({
-        method: 'POST',
-        url: 'users',
+        method: 'GET',
+        url: `users/${userId}`,
+        failOnStatusCode: false,
+        headers: { Authorization: token }
+    })       
+}
+
+export const alter = (token, userId, name, email, password) => {
+    return cy.api({
+        method: 'PUT',
+        url: `users/${userId}`,
+        failOnStatusCode: false,
         headers: { Authorization: token },
         body: {
-            name,
-            email,
-            password: password
-        }
-    }).then((response) => {
-
-        expect(response.status).to.eq(201)
-
-        return response.body.user.id
-    })
+                "name": name + ' Alterado',
+                "email": 'alterado' + email,
+                "password": 'alt' + password
+            }
+    })       
 }
+
+
+

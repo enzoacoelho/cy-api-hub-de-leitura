@@ -11,13 +11,12 @@ let bookTitle
 let bookAuthor
 
 beforeEach(() => {
+    cy.createUserAndLogin().then(usuario => {
+        tokenPadrao = usuario.token
+        userId = usuario.id
+    })
+    
     cy.fixture('users').then((usuarios) => {
-        userId = usuarios.padrao.userId
-
-        cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            tokenPadrao = tkn
-        })
-
         cy.gerarToken(usuarios.admin.email, usuarios.admin.password).then(tkn => {
             tokenAdmin = tkn
         })
@@ -29,8 +28,13 @@ beforeEach(() => {
         bookAuthor = book.dom_casmurro.author
     })
 
-    basketActions.clear(userId, tokenPadrao)
 })
+
+afterEach(() => {
+    if (userId) {
+        cy.removeUser(tokenAdmin, userId); 
+    }
+});
 
 describe('GET - Consultas e listagens - api/basket/:userId', () => {
 

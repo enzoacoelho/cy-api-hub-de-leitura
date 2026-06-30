@@ -9,23 +9,24 @@ let tokenPadrao
 let userId
 let tokenAdmin
 
-
-
 beforeEach(() => {
-    cy.fixture('users').then((usuarios) => {
-        cy.gerarToken(usuarios.padrao.email, usuarios.padrao.password).then(tkn => {
-            tokenPadrao = tkn
-            userId = usuarios.padrao.userId
-        })
 
+    cy.createUserAndLogin().then(usuario => {
+        tokenPadrao = usuario.token
+        userId = usuario.id
+    })
+    cy.fixture('users').then((usuarios) => {
         cy.gerarToken(usuarios.admin.email, usuarios.admin.password).then(tkn => {
             tokenAdmin = tkn
         })
     })
-
-    reservations.cleanAll(tokenPadrao)
-    cy.clearBasket(tokenPadrao, userId)
 })
+
+afterEach(() => {
+    if (userId) {
+        cy.removeUser(tokenAdmin, userId); 
+    }
+});
 
 describe('GET - Listar reservas de livros - api/reservations ', () => {
 
@@ -42,6 +43,7 @@ describe('GET - Listar reservas de livros - api/reservations ', () => {
                 expect(reservations[0].title).to.eq(bookTitle)
             })
         })
+        
     })
 
     it('Deve listar reservas do usuário com filtrando por status', () => {
@@ -71,7 +73,6 @@ describe('POST - Reservas de livros - api/reservations', () => {
 
     it('Deve reservar livro disponível com sucesso', () => {
         cy.createAndRegisterBook(tokenAdmin).then(response => {
-            console.log(response)
             const bookID = response.body.book.id
             const bookTitle = response.body.book.title
 
@@ -140,30 +141,32 @@ describe('POST - Reservas a partir da cesta - api/reservations/from-basket', () 
             const bookId = reservation.bookId
             const bookTitle = reservation.bookTitle
 
-            //adicionar no carrinho
-            cy.addBookBasket(userId, bookId, tokenPadrao)
+    
+            cy.addBookBasket(userId, bookId, tokenPadrao).then(bookBasket => {
 
-            const notes = "Livros para estudo"
-            const clearBasket = true
+                const notes = "Livros para estudo"
+                const clearBasket = true
 
-            //fazer reserva a partir do carrinho
-            reservations.createFromBasket(tokenPadrao, notes, clearBasket).then((response) => {
-                expect(response.status).equal(201)
-                expect(response.body.reservationsCreated).to.be.an('array')
+                //fazer reserva a partir do carrinho
+                reservations.createFromBasket(tokenPadrao, notes, clearBasket).then((response) => {
 
-                const reservation = response.body.reservationsCreated
-                expect(reservation[0].bookId).equal(bookID)
-                expect(reservation[0].bookTitle).equal(bookTitle)
+                    expect(response.status).equal(201)
+                    expect(response.body.reservationsCreated).to.be.an('array')
 
-                const summary = response.body.summary
-                expect(summary.totalItemsInBasket).equal(summary.successfulReservations)
+                    const reservation = response.body.reservationsCreated
+                    expect(reservation[0].bookId).equal(bookId)
+                    expect(reservation[0].bookTitle).equal(bookTitle)
 
-                expect(response.body.basketCleared).equal(true)
+                    const summary = response.body.summary
+                    expect(summary.totalItemsInBasket).equal(summary.successfulReservations)
 
-                const instructions = response.body.instructions
-                expect(instructions.message).equal("Todas as reservas foram criadas com prazo de 48h para retirada.")
+                    expect(response.body.basketCleared).equal(true)
 
-            })
+                    const instructions = response.body.instructions
+                    expect(instructions.message).equal("Todas as reservas foram criadas com prazo de 48h para retirada.")
+
+                })
+            })    
         })
     })
 

@@ -28,6 +28,7 @@ export const createWithNotes = (bookId, notes, tokenPadrao) => {
 }
 
 export const createFromBasket = (tokenPadrao, notes, clearBasket) => {
+    console.log('entrou no createcombasket')
     return cy.api({
         method: 'POST',
         url: 'reservations/from-basket',
@@ -60,6 +61,7 @@ export const getReservationsByStatus = (tokenPadrao, status) => {
 }
 
 export const cancel = (reservationId, tokenPadrao) => {
+    console.log('chegou no cancel')
     return cy.api({
         method: 'DELETE',
         url: 'reservations/' + reservationId,
@@ -102,9 +104,13 @@ export const cleanAll = (tokenPadrao) => {
         failOnStatusCode: false
     }).then((response) => {
 
+        console.log(response)
+
         if (response.body.reservations && response.body.reservations.length > 0) {
+             
 
             const reservas = response.body.reservations
+            console.log(reservas)
 
             reservas.forEach((reserva) => {
                 cancel(reserva.id, tokenPadrao)

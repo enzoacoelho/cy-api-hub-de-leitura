@@ -26,6 +26,7 @@
 import { faker } from '@faker-js/faker';
 import { createBook } from '../support/factory/book';
 import * as reservations from '../support/requests/reservations';
+import * as userMgmt from '../support/requests/users-admin';
 
 Cypress.Commands.add('gerarToken', (email, password) => {
     return cy.api({
@@ -98,7 +99,7 @@ Cypress.Commands.add('clearBasket', (tokenPadrao, userID) => {
     })
 })
 
-Cypress.Commands.add('addBookBasket', (userID, bookID, tokenPadrao, quantity = 1) => {
+Cypress.Commands.add('addBookBasket', (userID, bookID, tokenPadrao) => {
     return cy.api({
         method: 'POST',
         url: 'basket',
@@ -106,7 +107,7 @@ Cypress.Commands.add('addBookBasket', (userID, bookID, tokenPadrao, quantity = 1
         body: {
             userId: userID,
             bookId: bookID,
-            quantity: quantity
+            quantity: 1
         },
         failOnStatusCode: false
     })
@@ -137,6 +138,65 @@ Cypress.Commands.add('clearReservation', (tokenPadrao) => {
         }
     })
 })
+
+Cypress.Commands.add('registerUser', (name, email, password) => {
+    return cy.api({
+        method: 'POST',
+        url: 'users',
+        failOnStatusCode: false,
+        body: {
+            "name": name,
+            "email": email,
+            "password": password
+        }
+    })
+})
+
+
+Cypress.Commands.add('createUserAndLogin', (tokenAdmin) => {
+    const userName = faker.person.fullName()
+    const userEmail = faker.internet.email()
+    const userPass = '1234user'
+
+    cy.api({
+        method: 'POST',
+        url: 'users/',
+        body: {
+            
+            "name": userName,
+            "email": userEmail,
+            "password": userPass
+
+        },
+        failOnStatusCode: false,
+    }).then(response => {
+
+        const UserId = response.body.user.id
+
+        return cy.gerarToken(userEmail, userPass).then(tkn => {
+            cy.wrap({
+                token: tkn,
+                id: UserId,
+                name: userName,
+                email: userEmail
+
+            })
+        })
+    })
+
+})
+
+Cypress.Commands.add('removeUser', (tokenAdmin, id) => {
+     return cy.api({
+        method: 'DELETE',
+        url: `users/${id}`,      
+        failOnStatusCode: false,
+        headers: { Authorization: tokenAdmin }
+    })
+
+})
+
+
 
 
 
