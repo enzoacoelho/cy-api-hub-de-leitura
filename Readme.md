@@ -8,9 +8,10 @@ Este projeto cobre os fluxos principais e regras de negócio de uma API de bibli
 
 ## 🛠️ Tecnologias utilizadas
 
-- Cypress (Automação de API)
+- Cypress 
 - JavaScript
-- NPM
+- Node.js
+- Faker
 - Allure Report (Relatório de execução dos testes)
 - GitHub Actions (Integração Contínua - CI)
 
@@ -21,11 +22,10 @@ Este projeto cobre os fluxos principais e regras de negócio de uma API de bibli
 * **Usuários (`users/`)** — Gerenciamento completo de contas (listar, cadastrar, atualizar e remover usuários).
 * **Livros (`books/`)** — Controle total do catálogo de livros (criar, listar, editar e remover títulos do acervo).
 * **Reservas (`reservations/`)** — Fluxo de reservas de livros, listagem de solicitações em aberto, cancelamentos e atualizações de status.
-* **Cesta (`basket/`)** — Gerenciamento da cesta temporária de livros (adicionar itens, listar conteúdo atual e editar quantidades).
+* **Cesta (`basket/`)** — Gerenciamento da cesta temporária de livros (adicionar itens, listar conteúdo atual, editar quantidades, editar e remover).
 
 ## 📋 Pré-requisitos
 
-Antes de começar, certifique-se de ter instalado em sua máquina:
 * Node.js (versão 18 ou superior recomendada)
 * NPM (gerenciador de pacotes, já incluso no Node)
 
