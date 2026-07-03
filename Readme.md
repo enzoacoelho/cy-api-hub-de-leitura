@@ -15,7 +15,7 @@ Este projeto cobre os fluxos principais e regras de negócio de uma API de bibli
 - Allure Report (Relatório de execução dos testes)
 - GitHub Actions (Integração Contínua - CI)
 
-### 🎯 O que foi validado
+## 🎯 O que foi validado
 
 * **Autenticação (`auth/`)** — Processos de login, cadastro de novos usuários e validação de segurança via tokens de autenticação.
 * **Sistema (`system/`)** — Checagem de saúde da API (*healthcheck*) e coleta de informações gerais do servidor.
@@ -54,7 +54,7 @@ cd cy-api-hub-de-leitura
 npm install
 ```
 
-### 3. Com a API já rodando, execute os testes
+## 3. Com a API já rodando, execute os testes
 
 Você pode utilizar os seguintes comandos configurados no `package.json`:
 
