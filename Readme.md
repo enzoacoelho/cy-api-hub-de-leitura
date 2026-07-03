@@ -39,7 +39,7 @@ Este projeto contém **apenas os testes de API**. O servidor da biblioteca preci
 
 Em um terminal, clone o repositório oficial do servidor e inicialize a aplicação:
 ```bash
-git clone [https://github.com/EBAC-QE/hub-de-leitura-integrado.git](https://github.com/EBAC-QE/hub-de-leitura-integrado.git)
+git clone https://github.com/EBAC-QE/hub-de-leitura-integrado.git
 cd hub-de-leitura-integrado
 npm install
 npm start
@@ -49,7 +49,7 @@ npm start
 
 **2. Em outro terminal, clone e configure este repositório de testes**
 ```bash
-git clone [https://github.com/enzoacoelho/cy-api-hub-de-leitura.git](https://github.com/enzoacoelho/cy-api-hub-de-leitura.git)
+git clone https://github.com/enzoacoelho/cy-api-hub-de-leitura.git
 cd cy-api-hub-de-leitura
 npm install
 ```
