@@ -1,5 +1,3 @@
-<img width="902" height="376" alt="Captura de tela 2026-11-05 191119" src="https://github.com/user-attachments/assets/b3eef496-6be2-4b21-b981-dffcb2f491f1" />
-
 # HUB DE LEITURA - E2E (Testes de API)
 
 Testes end-to-end de API desenvolvidos com Cypress sobre o [Hub de Leitura Integrado](https://github.com/EBAC-QE/hub-de-leitura-integrado), um sistema de biblioteca completo desenvolvido especialmente pela EBAC para estudos de QA, testes e automação.
