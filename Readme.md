@@ -1,5 +1,4 @@
-<img width="907" height="376" alt="Captura de tela 2026-11-05 191119" src="https://github.com/user-attachments/assets/a7e9110e-c38e-4223-895f-75c403009a7f" />
-
+<img width="902" height="376" alt="Captura de tela 2026-11-05 191119" src="https://github.com/user-attachments/assets/b3eef496-6be2-4b21-b981-dffcb2f491f1" />
 
 # HUB DE LEITURA - E2E (Testes de API)
 
